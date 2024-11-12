@@ -123,9 +123,8 @@ export default function WorkoutTracker() {
     const day = schedule[weekIndex]?.[dayIndex];
     if (!day) return null;
 
-    // Only strip OR part, keep the asterisk
     const baseWorkout = day.workout.split(' OR ')[0].trim();
-    const details = workoutPrograms[baseWorkout.replace('*', '')];
+    const details = workoutPrograms[baseWorkout];
     if (!details) return null;
 
     return { day, details, weekIndex, dayIndex };

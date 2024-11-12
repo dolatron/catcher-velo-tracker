@@ -2,16 +2,16 @@
 import type { WorkoutType } from '@/data/types';
 
 export const workoutTypes: Record<string, WorkoutType> = {
-  'Hybrid B': {
+'Hybrid B': {
     name: 'Hybrid B',
     colorClass: 'bg-indigo-900 text-white hover:bg-indigo-950',
     description: 'Light intent day focusing on mechanics and arm path',
     rpeRange: '60-70% RPE',
     notes: 'All PlyoCare reps done @ 60-70% RPE. Use this day to work on things like your arm path, at a lower intent level.'
   },
-  'Hybrid B*': {
-    name: 'Hybrid B*',
-    colorClass: 'bg-indigo-950 text-white hover:bg-indigo-900',
+  'Hybrid C': {
+    name: 'Hybrid C',
+    colorClass: 'bg-violet-900 text-white hover:bg-violet-950',
     description: 'Light intent day with weighted ball work',
     rpeRange: '60-70% RPE',
     notes: 'Includes weighted ball throws at beginning of catch play. Extension Phase - Max distance without going over 70% RPE.'

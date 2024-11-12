@@ -20,15 +20,41 @@ export const workoutPrograms: Record<string, WorkoutProgram> = {
       { ...t.plyoCareDropSteps, rpe: '60-70%', sets: 2, notes: 'Lower intent focus on mechanics' },
       { ...t.plyoCareHalfStance, rpe: '60-70%', sets: 1, notes: 'Lower intent focus on mechanics' },
       { 
-        ...t.weightedBallCatch, 
-        notes: 'Only on Hybrid B* days - 5 throws each: 11oz, 9oz, 7oz, 5oz (~70% RPE), finish with 5 throws 4oz',
-        rpe: '70%'
-      },
-      { 
         ...t.longToss, 
         rpe: '70%', 
-        notes: 'Extension Phase only - Max distance without going over 70% RPE. Only on Hybrid B days' 
+        notes: 'Extension Phase only - Max distance without going over 70% RPE.' 
       }
+    ],
+    recovery: [
+      { ...r.hipFlexor },
+      { ...r.bandHalos },
+      { ...r.isometricExtensionFlexion },
+      { ...r.isometricAbductionAdduction },
+      { ...r.isometricRotation }
+    ],
+    rpeRange: '60-70%',
+    notes: 'All PlyoCare reps done @ 60-70% RPE. Use this day to work on things like your arm path, at a lower intent level.'
+  },
+
+  'Hybrid C': {
+    warmup: [
+      { ...w.foamRoll, notes: '10s per pass, full body' },
+      { ...w.lacrosseBall, notes: 'Target specific areas of tension' },
+      { ...w.jaegerBands, notes: 'Complete full series' },
+      { ...w.wristWeights, notes: 'Complete full series' }
+    ],
+    throwing: [
+      { ...t.plyoCareReverse, rpe: '60-70%', notes: 'Focus on arm path mechanics' },
+      { ...t.plyoCarePivot, rpe: '60-70%', notes: 'Focus on arm path mechanics' },
+      { ...t.plyoCareRollIn, rpe: '60-70%', reps: '10 reps with 1kg AND 450g balls', notes: 'Focus on arm path mechanics' },
+      { ...t.plyoCareStepBacks, rpe: '60-70%', sets: 2, notes: 'Lower intent focus on mechanics' },
+      { ...t.plyoCareDropSteps, rpe: '60-70%', sets: 2, notes: 'Lower intent focus on mechanics' },
+      { ...t.plyoCareHalfStance, rpe: '60-70%', sets: 1, notes: 'Lower intent focus on mechanics' },
+      { 
+        ...t.weightedBallCatch, 
+        notes: '5 throws each: 11oz, 9oz, 7oz, 5oz (~70% RPE), finish with 5 throws 4oz',
+        rpe: '70%'
+      },
     ],
     recovery: [
       { ...r.hipFlexor },
@@ -212,14 +238,14 @@ export const workoutPrograms: Record<string, WorkoutProgram> = {
 };
 
 export const weeklySchedule = [
-  ['Off', 'Recovery', 'Hybrid B', 'Recovery', 'Hybrid B*', 'Recovery', 'Hybrid B*'],
-  ['Off', 'Recovery', 'Hybrid B', 'Recovery', 'Hybrid A', 'Recovery', 'Hybrid B*'],
-  ['Off', 'Recovery', 'Hybrid A', 'Recovery', 'Hybrid B*', 'Recovery', 'Hybrid A'],
-  ['Off', 'Recovery', 'Hybrid A', 'Recovery', 'Hybrid B*', 'Recovery', 'Hybrid A'],
+  ['Off', 'Recovery', 'Hybrid B', 'Recovery', 'Hybrid C', 'Recovery', 'Hybrid C'],
+  ['Off', 'Recovery', 'Hybrid B', 'Recovery', 'Hybrid A', 'Recovery', 'Hybrid C'],
+  ['Off', 'Recovery', 'Hybrid A', 'Recovery', 'Hybrid C', 'Recovery', 'Hybrid A'],
+  ['Off', 'Recovery', 'Hybrid A', 'Recovery', 'Hybrid C', 'Recovery', 'Hybrid A'],
   ['Off', 'Recovery', 'Plyo Velo', 'Recovery', 'Hybrid B', 'Recovery', 'Hybrid A'],
   ['Off', 'Recovery', 'Plyo Velo', 'Recovery', 'Recovery', 'Recovery', 'Velocity'],
   ['Off', 'Recovery', 'Plyo Velo', 'Recovery', 'Recovery OR Hybrid B', 'Recovery', 'Velocity'],
-  ['Off', 'Recovery', 'Plyo Velo', 'Recovery', 'Hybrid B*', 'Recovery', 'Velocity']
+  ['Off', 'Recovery', 'Plyo Velo', 'Recovery', 'Hybrid C', 'Recovery', 'Velocity']
 ];
 
 export const generateSchedule = (startDate: Date) => {
