@@ -147,26 +147,6 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
     );
   };
 
-  /**
-   * Renders the video demonstration link if available
-   */
-  const renderVideoLink = () => {
-    if (!displayExercise.videoUrl) return null;
-
-    return (
-      <a
-        href={displayExercise.videoUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={BASE_STYLES.videoLink}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={`Watch video demonstration for ${displayExercise.name}`}
-      >
-        <ExternalLink className="w-4 h-4" />
-      </a>
-    );
-  };
-
   return (
     /* Main container - entire row is clickable for exercise completion toggle */
     <div 
