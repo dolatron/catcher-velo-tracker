@@ -141,9 +141,9 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
       ];
 
   return (
-    <Card className="w-full bg-white p-4 sm:p-8 shadow-lg mb-4 sm:mb-8">
+    <Card className="w-full bg-white p-3 sm:p-8 shadow-lg mb-3 sm:mb-8">
       {/* Header Section */}
-      <header className="flex justify-between items-start pb-4 sm:pb-6 border-b border-gray-200">
+      <header className="flex justify-between items-start pb-3 sm:pb-6 border-b border-gray-200">
         <div>
           {/* Workout Title */}
           <h2 className="text-lg sm:text-xl font-semibold text-indigo-900">

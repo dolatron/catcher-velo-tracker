@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { workoutPrograms, generateSchedule } from '@/data/programs';
 import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
@@ -50,45 +50,13 @@ interface WorkoutDetails {
   dayIndex: number;
 }
 
-/**
- * Parsed workout identifier components
- */
-interface ParsedWorkoutId {
-  weekIndex: number;
-  dayIndex: number;
-}
-
 type Schedule = DayWorkout[][];
-
-/**
- * Utility Functions
- */
 
 /**
  * Creates a unique identifier for a workout
  */
 const createWorkoutId = (weekIndex: number, dayIndex: number, date: Date): string => 
   `week${weekIndex}-day${dayIndex}-${date.toISOString()}`;
-
-/**
- * Parses a workout identifier into its component parts
- * Returns null if the ID is invalid
- */
-const parseWorkoutId = (workoutId: string): ParsedWorkoutId | null => {
-  try {
-    const [weekPart, dayPart] = workoutId.split('-');
-    const weekIndex = parseInt(weekPart.replace('week', ''));
-    const dayIndex = parseInt(dayPart.replace('day', ''));
-    
-    if (isNaN(weekIndex) || isNaN(dayIndex)) {
-      return null;
-    }
-
-    return { weekIndex, dayIndex };
-  } catch {
-    return null;
-  }
-};
 
 /**
  * Custom Hook: usePersistedSchedule
@@ -142,49 +110,58 @@ export default function WorkoutTracker() {
   // State management
   const [schedule, setSchedule] = usePersistedSchedule();
   const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
-  
+  const weekRefs = useRef<(HTMLElement | null)[]>([]);
+
   /**
-   * Event Handlers
+   * Get details for an expanded workout
    */
-  
-  // Handle clicking on a workout card
-  const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date) => {
-    const workoutId = createWorkoutId(weekIndex, dayIndex, date);
-    setExpandedWorkoutId(current => current === workoutId ? null : workoutId);
-  }, []);
-
-  // Get details for an expanded workout
   const getWorkoutDetails = useCallback((workoutId: string): WorkoutDetails | null => {
-    const parsed = parseWorkoutId(workoutId);
-    if (!parsed) {
-      return null;
-    }
-
-    const { weekIndex, dayIndex } = parsed;
+    const parts = workoutId.split('-');
+    const weekIndex = parseInt(parts[0].replace('week', ''));
+    const dayIndex = parseInt(parts[1].replace('day', ''));
+    
     const day = schedule[weekIndex]?.[dayIndex];
-    if (!day) {
-      return null;
-    }
+    if (!day) return null;
 
-    // Get base workout type removing variations and asterisks
-    const baseWorkout = day.workout.split(' OR ')[0].replace('*', '');
-    const details = workoutPrograms[baseWorkout];
-    if (!details) {
-      return null;
-    }
+    // Only strip OR part, keep the asterisk
+    const baseWorkout = day.workout.split(' OR ')[0].trim();
+    const details = workoutPrograms[baseWorkout.replace('*', '')];
+    if (!details) return null;
 
-    return {
-      day,
-      details,
-      weekIndex,
-      dayIndex
-    };
+    return { day, details, weekIndex, dayIndex };
   }, [schedule]);
 
-  // Handle exercise completion toggle
+  /**
+   * Handle clicking on a workout card
+   */
+  const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date) => {
+    const workoutId = createWorkoutId(weekIndex, dayIndex, date);
+    
+    setExpandedWorkoutId(current => {
+      const newId = current === workoutId ? null : workoutId;
+      
+      if (newId) {
+        // Adding small delay to ensure DOM has updated
+        setTimeout(() => {
+          const weekEl = weekRefs.current[weekIndex];
+          if (weekEl) {
+            const yOffset = -20; // 20px padding from top
+            const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }, 100);
+      }
+      
+      return newId;
+    });
+  }, []);
+
+  /**
+   * Handle exercise completion toggle
+   */
   const handleExerciseComplete = useCallback((weekIndex: number, dayIndex: number, exerciseId: string) => {
-    setSchedule(prevSchedule => 
-      prevSchedule.map((week, wIndex) => 
+    setSchedule(prev => 
+      prev.map((week, wIndex) => 
         week.map((day, dIndex) => {
           if (wIndex === weekIndex && dIndex === dayIndex) {
             return {
@@ -202,14 +179,14 @@ export default function WorkoutTracker() {
   }, [setSchedule]);
 
   return (
-    <div className="max-w-6xl mx-auto p-3 sm:p-6">
+    <div className="max-w-6xl mx-auto p-2 sm:p-6">
       {/* Program Title */}
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">
+      <h1 className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-center">
         8-Week Catcher Velocity Program
       </h1>
       
       {/* Weekly Schedule Display */}
-      <div className="space-y-8 sm:space-y-12">
+      <div className="space-y-6 sm:space-y-12">
         {schedule.map((week, weekIndex) => {
           // Get details for expanded workout in this week, if any
           const expandedDetails = expandedWorkoutId?.startsWith(`week${weekIndex}`) 
@@ -217,13 +194,17 @@ export default function WorkoutTracker() {
             : null;
 
           return (
-            <section key={`week-${weekIndex}`} className="week-section">
+            <section 
+              key={`week-${weekIndex}`} 
+              className="week-section"
+              ref={el => { weekRefs.current[weekIndex] = el; }}
+            >
               {/* Week Header */}
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4">
                 Week {weekIndex + 1}
               </h2>
 
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 {/* Grid of Day Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 sm:gap-4">
                   {week.map((day, dayIndex) => {

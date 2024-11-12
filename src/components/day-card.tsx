@@ -32,11 +32,11 @@ const BASE_STYLES = {
   },
   date: {
     container: "text-xs",
-    weekday: "font-medium",
+    weekday: "font-medium sm:inline hidden",
     datePart: "font-normal"
   },
   workout: {
-    name: "font-bold text-base mt-2",        // Primary workout name display
+    name: "font-medium text-sm sm:text-base mt-1 sm:mt-2",        // Primary workout name display
     description: "text-xs mt-1.5 hidden sm:block opacity-90 font-normal",  // Additional workout info
     rpe: "text-xs mt-1 hidden sm:block opacity-90 font-medium italic"      // RPE (Rate of Perceived Exertion) display
   }
