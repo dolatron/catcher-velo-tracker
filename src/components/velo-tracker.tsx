@@ -1,4 +1,18 @@
 // velo-tracker.tsx
+/**
+ * WorkoutTracker Component
+ * 
+ * Main component for the 8-Week Catcher Velocity Program tracker.
+ * Manages the complete workout schedule, tracks exercise completion,
+ * and persists progress in local storage.
+ * 
+ * Features:
+ * - Displays full 8-week program calendar
+ * - Tracks exercise completion state
+ * - Persists progress in localStorage
+ * - Responsive layout for all screen sizes
+ */
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,19 +23,26 @@ import type { DayWorkout, WorkoutProgram } from '@/data/types';
 
 // Constants
 const STORAGE_KEY = 'workout-tracker-state';
-const PROGRAM_START_DATE = new Date(2024, 10, 17); // November 17, 2024 (month is 0-based)
+// Start date is set to November 17, 2024 (month is 0-based)
+const PROGRAM_START_DATE = new Date(2024, 10, 17);
 const ERROR_MESSAGES = {
   SAVE_FAILED: 'Failed to save schedule:',
   LOAD_FAILED: 'Failed to load saved schedule:',
 } as const;
 
-// Types
+// Type Definitions
+/**
+ * Represents a day's workout data in a format suitable for storage
+ */
 interface SerializedDayWorkout {
-  date: string;
-  workout: string;
-  completed: Record<string, boolean>;
+  date: string;              // ISO string date
+  workout: string;           // Workout type name
+  completed: Record<string, boolean>;  // Exercise completion status
 }
 
+/**
+ * Extended workout details including metadata
+ */
 interface WorkoutDetails {
   day: DayWorkout;
   details: WorkoutProgram;
@@ -29,6 +50,9 @@ interface WorkoutDetails {
   dayIndex: number;
 }
 
+/**
+ * Parsed workout identifier components
+ */
 interface ParsedWorkoutId {
   weekIndex: number;
   dayIndex: number;
@@ -36,10 +60,20 @@ interface ParsedWorkoutId {
 
 type Schedule = DayWorkout[][];
 
-// Utility functions
+/**
+ * Utility Functions
+ */
+
+/**
+ * Creates a unique identifier for a workout
+ */
 const createWorkoutId = (weekIndex: number, dayIndex: number, date: Date): string => 
   `week${weekIndex}-day${dayIndex}-${date.toISOString()}`;
 
+/**
+ * Parses a workout identifier into its component parts
+ * Returns null if the ID is invalid
+ */
 const parseWorkoutId = (workoutId: string): ParsedWorkoutId | null => {
   try {
     const [weekPart, dayPart] = workoutId.split('-');
@@ -56,9 +90,15 @@ const parseWorkoutId = (workoutId: string): ParsedWorkoutId | null => {
   }
 };
 
-// Custom hooks
+/**
+ * Custom Hook: usePersistedSchedule
+ * 
+ * Manages the workout schedule state and its persistence in localStorage.
+ * Handles loading saved progress and saving updates.
+ */
 const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<Schedule>>] => {
   const [schedule, setSchedule] = useState<Schedule>(() => {
+    // Don't try to access localStorage during SSR
     if (typeof window === 'undefined') {
       return generateSchedule(PROGRAM_START_DATE);
     }
@@ -69,6 +109,7 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
         return generateSchedule(PROGRAM_START_DATE);
       }
       
+      // Parse saved schedule and convert date strings back to Date objects
       const parsed = JSON.parse(saved) as SerializedDayWorkout[][];
       return parsed.map(week =>
         week.map(day => ({
@@ -82,6 +123,7 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
     }
   });
 
+  // Save schedule to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule));
@@ -93,16 +135,25 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
   return [schedule, setSchedule];
 };
 
-// Main component
+/**
+ * Main WorkoutTracker Component
+ */
 export default function WorkoutTracker() {
+  // State management
   const [schedule, setSchedule] = usePersistedSchedule();
   const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
   
+  /**
+   * Event Handlers
+   */
+  
+  // Handle clicking on a workout card
   const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date) => {
     const workoutId = createWorkoutId(weekIndex, dayIndex, date);
     setExpandedWorkoutId(current => current === workoutId ? null : workoutId);
   }, []);
 
+  // Get details for an expanded workout
   const getWorkoutDetails = useCallback((workoutId: string): WorkoutDetails | null => {
     const parsed = parseWorkoutId(workoutId);
     if (!parsed) {
@@ -115,6 +166,7 @@ export default function WorkoutTracker() {
       return null;
     }
 
+    // Get base workout type removing variations and asterisks
     const baseWorkout = day.workout.split(' OR ')[0].replace('*', '');
     const details = workoutPrograms[baseWorkout];
     if (!details) {
@@ -129,6 +181,7 @@ export default function WorkoutTracker() {
     };
   }, [schedule]);
 
+  // Handle exercise completion toggle
   const handleExerciseComplete = useCallback((weekIndex: number, dayIndex: number, exerciseId: string) => {
     setSchedule(prevSchedule => 
       prevSchedule.map((week, wIndex) => 
@@ -150,23 +203,28 @@ export default function WorkoutTracker() {
 
   return (
     <div className="max-w-6xl mx-auto p-3 sm:p-6">
+      {/* Program Title */}
       <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">
         8-Week Catcher Velocity Program
       </h1>
       
+      {/* Weekly Schedule Display */}
       <div className="space-y-8 sm:space-y-12">
         {schedule.map((week, weekIndex) => {
+          // Get details for expanded workout in this week, if any
           const expandedDetails = expandedWorkoutId?.startsWith(`week${weekIndex}`) 
             ? getWorkoutDetails(expandedWorkoutId)
             : null;
 
           return (
             <section key={`week-${weekIndex}`} className="week-section">
+              {/* Week Header */}
               <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
                 Week {weekIndex + 1}
               </h2>
 
               <div className="space-y-3 sm:space-y-4">
+                {/* Grid of Day Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 sm:gap-4">
                   {week.map((day, dayIndex) => {
                     const workoutId = createWorkoutId(weekIndex, dayIndex, day.date);
@@ -182,6 +240,7 @@ export default function WorkoutTracker() {
                   })}
                 </div>
 
+                {/* Expanded Workout Details */}
                 {expandedDetails && (
                   <WorkoutDetailCard
                     day={expandedDetails.day}
@@ -200,6 +259,7 @@ export default function WorkoutTracker() {
         })}
       </div>
 
+      {/* Footer Information */}
       <footer className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-600">
         <p>Click any workout card to see details. Each exercise has a video demonstration available.</p>
       </footer>

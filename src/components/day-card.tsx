@@ -1,23 +1,30 @@
 // day-card.tsx
+/**
+ * DayCard Component
+ * Displays a single day's workout information in a card format.
+ * Used in the weekly schedule grid to show workout type and date.
+ */
+
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { workoutTypes } from '@/data/workouts';
 
-// Types
+// Type Definitions
 interface DayCardProps {
-  workout: string;
-  date: Date;
-  isExpanded: boolean;
-  onClick: () => void;
+  workout: string;         // Name of the workout (e.g., "Hybrid B", "Recovery")
+  date: Date;             // Date of the workout
+  isExpanded: boolean;    // Whether this card is currently selected/expanded
+  onClick: () => void;    // Handler for when card is clicked
 }
 
-// Constants
+// Date formatting options for different parts of the date display
 const DATE_FORMAT_OPTIONS = {
-  WEEKDAY: { weekday: 'short' } as const,
-  DAY: { day: 'numeric' } as const,
-  MONTH: { month: 'short' } as const
+  WEEKDAY: { weekday: 'short' } as const,    // e.g., "Mon"
+  DAY: { day: 'numeric' } as const,          // e.g., "15"
+  MONTH: { month: 'short' } as const         // e.g., "Jan"
 } as const;
 
+// Base style definitions for consistent styling across the component
 const BASE_STYLES = {
   card: {
     default: "cursor-pointer transition-colors duration-200",
@@ -29,19 +36,27 @@ const BASE_STYLES = {
     datePart: "font-normal"
   },
   workout: {
-    name: "font-bold text-base mt-2",  // Increased size and weight
-    description: "text-xs mt-1.5 hidden sm:block opacity-90 font-normal",
-    rpe: "text-xs mt-1 hidden sm:block opacity-90 font-medium italic"  // Added italic
+    name: "font-bold text-base mt-2",        // Primary workout name display
+    description: "text-xs mt-1.5 hidden sm:block opacity-90 font-normal",  // Additional workout info
+    rpe: "text-xs mt-1 hidden sm:block opacity-90 font-medium italic"      // RPE (Rate of Perceived Exertion) display
   }
 } as const;
 
-// Helper functions
+/**
+ * Helper Functions
+ */
+
+// Extracts base workout name by removing variations and asterisks
+// e.g., "Hybrid B* OR Recovery" -> "Hybrid B"
 const getBaseWorkout = (workout: string): string => 
   workout.split(' OR ')[0].replace('*', '');
 
+// Formats a date part using specified options
 const formatDate = (date: Date, options: Intl.DateTimeFormatOptions): string => 
   date.toLocaleDateString('en-US', options);
 
+// Gets workout information from the workoutTypes mapping
+// Returns default values if workout type not found
 const getWorkoutInfo = (workout: string) => {
   const baseWorkout = getBaseWorkout(workout);
   return workoutTypes[baseWorkout] || {
@@ -51,23 +66,27 @@ const getWorkoutInfo = (workout: string) => {
   };
 };
 
-// Component
+/**
+ * DayCard Component
+ * Displays a card showing a single day's workout information
+ */
 export const DayCard: React.FC<DayCardProps> = ({
   workout,
   date,
   isExpanded,
   onClick
 }) => {
-  // Memoized values
+  // Memoized values to prevent unnecessary recalculations
   const workoutInfo = useMemo(() => getWorkoutInfo(workout), [workout]);
   
+  // Format date parts once and reuse
   const formattedDate = useMemo(() => ({
     weekday: formatDate(date, DATE_FORMAT_OPTIONS.WEEKDAY),
     day: formatDate(date, DATE_FORMAT_OPTIONS.DAY),
     month: formatDate(date, DATE_FORMAT_OPTIONS.MONTH)
   }), [date]);
 
-  // Computed classes
+  // Compute classes for card styling, including conditional expanded state
   const cardClasses = useMemo(() => {
     const baseClasses = [
       BASE_STYLES.card.default,
@@ -96,7 +115,7 @@ export const DayCard: React.FC<DayCardProps> = ({
       }}
     >
       <div className="p-3 space-y-1">
-        {/* Date Section */}
+        {/* Date Display Section */}
         <div className={BASE_STYLES.date.container}>
           <span className={BASE_STYLES.date.weekday}>
             {formattedDate.weekday}
@@ -107,19 +126,19 @@ export const DayCard: React.FC<DayCardProps> = ({
           </span>
         </div>
 
-        {/* Workout Title */}
+        {/* Workout Name */}
         <div className={BASE_STYLES.workout.name}>
           {workoutInfo.name}
         </div>
 
-        {/* Workout Description */}
+        {/* Workout Description - Only shown on larger screens */}
         {workoutInfo.description && (
           <div className={BASE_STYLES.workout.description}>
             {workoutInfo.description}
           </div>
         )}
 
-        {/* RPE Range */}
+        {/* RPE Range - Only shown on larger screens */}
         {workoutInfo.rpeRange && (
           <div className={BASE_STYLES.workout.rpe}>
             {workoutInfo.rpeRange}
@@ -130,7 +149,8 @@ export const DayCard: React.FC<DayCardProps> = ({
   );
 };
 
-// Memoize the component to prevent unnecessary rerenders
+// Memoize the entire component to prevent unnecessary rerenders
+// Only rerender if workout, date, or expanded state changes
 export default React.memo(DayCard, (prevProps, nextProps) => {
   return prevProps.workout === nextProps.workout &&
     prevProps.date.getTime() === nextProps.date.getTime() &&

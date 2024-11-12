@@ -1,3 +1,47 @@
+# Catcher Velocity Program Tracker
+
+A React-based web application for tracking progress through Driveline Baseball's 8-week catcher velocity program.
+
+## Features
+
+- 8-week workout schedule visualization
+- Exercise tracking and progress persistence
+- Video demonstrations for exercises
+- Mobile-responsive design
+- Accessibility support
+
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone [repository-url]
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+## Project Structure
+
+```
+src/
+├── components/    # React components
+├── data/          # Data models and constants
+├── app/           # Global app framework and styles
+└── lib/         # Utility functions
+```
+
+
+## Getting Started
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

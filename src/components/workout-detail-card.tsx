@@ -1,4 +1,11 @@
 // workout-detail-card.tsx
+/**
+ * WorkoutDetailCard Component
+ * Displays the detailed view of a workout when selected from the calendar.
+ * Shows all exercises grouped by section (warm-up, throwing, recovery)
+ * and allows tracking completion of individual exercises.
+ */
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
@@ -8,43 +15,61 @@ import { workoutTypes } from '@/data/workouts';
 
 // Constants
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric'
+  weekday: 'long',    // e.g., "Monday"
+  month: 'long',      // e.g., "January"
+  day: 'numeric'      // e.g., "15"
 } as const;
 
-// Types
+// Type Definitions
 interface WorkoutSectionProps {
-  title: string;
-  exercises?: Exercise[];
-  completed: Record<string, boolean>;
-  onComplete: (id: string) => void;
-  workoutType: string;
-  weekIndex: number;
-  dayIndex: number;
+  title: string;                          // Section title (e.g., "Warm-up", "Throwing", "Recovery")
+  exercises?: Exercise[];                 // List of exercises in this section
+  completed: Record<string, boolean>;     // Completion status for each exercise
+  onComplete: (id: string) => void;       // Callback when exercise completion status changes
+  workoutType: string;                    // Type of workout (affects exercise variations)
+  weekIndex: number;                      // Week number (1-8)
+  dayIndex: number;                       // Day number (1-7)
 }
 
 interface WorkoutDetailCardProps {
   day: {
-    workout: string;
-    date: Date;
-    completed: Record<string, boolean>;
+    workout: string;                      // Workout name (e.g., "Hybrid B")
+    date: Date;                           // Date of the workout
+    completed: Record<string, boolean>;   // Completion status of exercises
   };
-  details: WorkoutProgram;
-  onComplete: (id: string) => void;
-  onClose: () => void;
-  weekIndex: number;
-  dayIndex: number;
+  details: WorkoutProgram;                // Full workout program details
+  onComplete: (id: string) => void;       // Exercise completion callback
+  onClose: () => void;                    // Close detail view callback
+  weekIndex: number;                      // Week number (1-8)
+  dayIndex: number;                       // Day number (1-7)
 }
 
-// Helper functions
+/**
+ * Helper Functions
+ */
+
+/**
+ * Generates a unique section identifier
+ * @param weekIndex Week number
+ * @param dayIndex Day number
+ * @param title Section title
+ * @returns Unique section identifier
+ */
 const getSectionId = (weekIndex: number, dayIndex: number, title: string): string => 
   `week${weekIndex}-day${dayIndex}-${title.toLowerCase()}`;
 
+/**
+ * Extracts base workout name by removing variations and asterisks
+ * @param workout Workout name with possible variations
+ * @returns Base workout name
+ */
 const getBaseWorkout = (workout: string): string => 
   workout.split(' OR ')[0].replace('*', '');
 
-// Components
+/**
+ * WorkoutSection Component
+ * Renders a section of exercises (e.g., Warm-up, Throwing, Recovery)
+ */
 const WorkoutSection: React.FC<WorkoutSectionProps> = ({ 
   title, 
   exercises = [], 
@@ -59,15 +84,18 @@ const WorkoutSection: React.FC<WorkoutSectionProps> = ({
   
   return (
     <div className="rounded-lg p-3 sm:p-6">
+      {/* Section Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base sm:text-lg font-semibold text-indigo-900">
           {title}
         </h3>
+        {/* Progress Counter */}
         <span className="text-sm text-gray-500">
           {completedCount} / {exercises.length}
         </span>
       </div>
 
+      {/* Exercise List */}
       <div className="space-y-1">
         {exercises.map((exercise) => {
           const exerciseId = `${sectionId}-${exercise.id}`;
@@ -87,6 +115,10 @@ const WorkoutSection: React.FC<WorkoutSectionProps> = ({
   );
 };
 
+/**
+ * WorkoutDetailCard Component
+ * Main component for displaying detailed workout information
+ */
 export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({ 
   day, 
   details, 
@@ -95,38 +127,46 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   weekIndex,
   dayIndex
 }) => {
+  // Get workout type information
   const baseWorkout = getBaseWorkout(day.workout);
   const workoutInfo = workoutTypes[baseWorkout];
 
+  // Define sections based on workout type
   const workoutSections = baseWorkout === 'Off' 
-    ? [{ title: "Rest Day", exercises: details.recovery }]
+    ? [{ title: "Rest Day", exercises: details.recovery }]  // Rest days only show recovery
     : [
-        { title: "Warm-up", exercises: details.warmup },
+        { title: "Warm-up", exercises: details.warmup },    // Normal days show all sections
         { title: "Throwing", exercises: details.throwing },
         { title: "Recovery", exercises: details.recovery }
       ];
 
   return (
     <Card className="w-full bg-white p-4 sm:p-8 shadow-lg mb-4 sm:mb-8">
+      {/* Header Section */}
       <header className="flex justify-between items-start pb-4 sm:pb-6 border-b border-gray-200">
         <div>
+          {/* Workout Title */}
           <h2 className="text-lg sm:text-xl font-semibold text-indigo-900">
             {day.workout}
           </h2>
+          {/* Workout Date */}
           <p className="text-sm sm:text-base text-gray-500 mt-1">
             {day.date.toLocaleDateString('en-US', DATE_FORMAT_OPTIONS)}
           </p>
+          {/* RPE Range (if specified) */}
           {workoutInfo?.rpeRange && (
             <p className="text-sm text-indigo-600 mt-1">
               Target Intensity: {workoutInfo.rpeRange}
             </p>
           )}
+          {/* Additional Notes */}
           {workoutInfo?.notes && (
             <p className="text-sm text-gray-600 mt-2">
               {workoutInfo.notes}
             </p>
           )}
         </div>
+        {/* Close Button */}
         <button 
           onClick={onClose}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -136,6 +176,7 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
         </button>
       </header>
 
+      {/* Workout Sections */}
       {details && (
         <div className="divide-y divide-gray-200">
           {workoutSections.map((section) => (
