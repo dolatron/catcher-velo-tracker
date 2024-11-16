@@ -8,6 +8,7 @@
 import React, { useMemo, forwardRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { workoutTypes } from '@/data/workouts';
+import { getBaseWorkout, formatDate } from '@/utils/common';
 
 // Type Definitions
 interface DayCardProps {
@@ -52,15 +53,6 @@ const BASE_STYLES = {
 /**
  * Helper Functions
  */
-
-// Extracts base workout name by removing variations and asterisks
-// e.g., "Hybrid B* OR Recovery" -> "Hybrid B"
-const getBaseWorkout = (workout: string): string => 
-  workout.split(' OR ')[0].replace('*', '');
-
-// Formats a date part using specified options
-const formatDate = (date: Date, options: Intl.DateTimeFormatOptions): string => 
-  date.toLocaleDateString('en-US', options);
 
 // Gets workout information from the workoutTypes mapping
 // Returns default values if workout type not found

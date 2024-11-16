@@ -3,6 +3,7 @@ import { throwingExercises as t } from '@/data/excercises';
 import { warmupExercises as w } from '@/data/excercises';
 import { recoveryExercises as r } from '@/data/excercises';
 import type { WorkoutProgram } from '@/data/types';
+import { normalizeDate } from '@/utils/common';
 
 export const workoutPrograms: Record<string, WorkoutProgram> = {
   'Hybrid B': {
@@ -249,12 +250,14 @@ export const weeklySchedule = [
 ];
 
 export const generateSchedule = (startDate: Date) => {
+  const normalizedStart = normalizeDate(startDate);
+  
   return weeklySchedule.map((week, weekIndex) => 
     week.map((workout, dayIndex) => {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + (weekIndex * 7) + dayIndex);
+      const date = new Date(normalizedStart);
+      date.setDate(normalizedStart.getDate() + (weekIndex * 7) + dayIndex);
       return {
-        date,
+        date: normalizeDate(date),
         workout,
         completed: {}
       };

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ConfirmModal } from './ui/confirm-modal';
-import { normalizeDate } from '@/utils/common';
+import { normalizeDate, formatDateForDisplay, formatDateForInput } from '@/utils/common';
 
 interface DatePickerProps {
   selectedDate: Date;
@@ -48,22 +48,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
     onDateChange(today);
     setIsExpanded(false);
     setShowStartOverModal(false);
-  };
-
-  const formatDateForDisplay = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  const formatDateForInput = (date: Date) => {
-    // Ensure we're using local timezone for the input value
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   };
 
   return (
