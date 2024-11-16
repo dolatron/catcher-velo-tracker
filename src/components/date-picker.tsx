@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ConfirmModal } from './ui/confirm-modal';
-import { normalizeDate, formatDateForDisplay, formatDateForInput } from '@/utils/common';
+import { normalizeDate, formatDateForDisplay, formatDateForInput, calculateEndDate } from '@/utils/common';
 
 interface DatePickerProps {
   selectedDate: Date;
@@ -56,9 +56,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between text-left"
       >
-        <span className="text-sm font-medium mb-1 sm:mb-0">
-          Program Start Date: {formatDateForDisplay(selectedDate)}
-        </span>
+        <div className="space-y-1 sm:space-y-0">
+          <span className="text-sm font-medium block sm:inline">
+            Start Date: {formatDateForDisplay(selectedDate)}
+          </span>
+          <span className="text-xs text-gray-500 block sm:inline sm:ml-2">
+            (End Date: {formatDateForDisplay(calculateEndDate(selectedDate))})
+          </span>
+        </div>
         <div className="text-sm text-gray-600">
           Progress: {progress.percentage}% ({progress.completed}/{progress.total} days)
         </div>

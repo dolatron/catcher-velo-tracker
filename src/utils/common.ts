@@ -44,3 +44,12 @@ export const formatDateForInput = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+/**
+ * Calculates the estimated completion date (8 weeks from start)
+ */
+export const calculateEndDate = (startDate: Date): Date => {
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + (8 * 7) - 1); // 8 weeks minus 1 day
+  return endDate;
+};
