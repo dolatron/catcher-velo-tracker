@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ConfirmModal } from './ui/confirm-modal';
+import { normalizeDate } from '@/utils/common';
 
 interface DatePickerProps {
   selectedDate: Date;
@@ -17,12 +18,15 @@ interface DatePickerProps {
 
 export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChange, progress }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [tempDate, setTempDate] = useState<Date>(selectedDate);
+  const [tempDate, setTempDate] = useState<Date>(() => normalizeDate(selectedDate));
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showStartOverModal, setShowStartOverModal] = useState(false);  // Add new state
+  const [showStartOverModal, setShowStartOverModal] = useState(false);
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTempDate(new Date(event.target.value));
+    // Create date from input value and adjust for timezone
+    const [year, month, day] = event.target.value.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day); // month is 0-based in Date constructor
+    setTempDate(normalizeDate(localDate));
   };
 
   const handleApplyDate = () => {
@@ -34,12 +38,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
   };
 
   const handleConfirmDateChange = () => {
-    onDateChange(tempDate);
+    onDateChange(normalizeDate(tempDate));
     setIsExpanded(false);
   };
 
   const handleStartOver = () => {
-    const today = new Date();
+    const today = normalizeDate(new Date());
     setTempDate(today);
     onDateChange(today);
     setIsExpanded(false);
@@ -55,7 +59,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
   };
 
   const formatDateForInput = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    // Ensure we're using local timezone for the input value
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   return (
@@ -78,13 +86,23 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
       {isExpanded && (
         <div className="space-y-2 mt-4">
           <div className="flex gap-3">
-            <input
-              type="date"
-              id="start-date"
-              value={formatDateForInput(tempDate)}
-              onChange={handleDateChange}
-              className="flex-1 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="date"
+                id="start-date"
+                value={formatDateForInput(tempDate)}
+                onChange={handleDateChange}
+                className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div 
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => {
+                  const input = document.getElementById('start-date') as HTMLInputElement;
+                  input?.showPicker();
+                }}
+              />
+            </div>
             <button
               onClick={handleApplyDate}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"

@@ -21,6 +21,7 @@ import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
 import type { DayWorkout, WorkoutProgram } from '@/data/types';
+import { normalizeDate } from '@/utils/common';
 
 // Constants
 const STORAGE_KEY = 'workout-tracker-state';
@@ -113,13 +114,13 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
  */
 const useStartDate = (): [Date, (date: Date) => void] => {
   const [startDate, setStartDate] = useState<Date>(() => {
-    if (typeof window === 'undefined') return PROGRAM_START_DATE;
+    if (typeof window === 'undefined') return normalizeDate(PROGRAM_START_DATE);
     
     try {
       const saved = localStorage.getItem(START_DATE_KEY);
-      return saved ? new Date(saved) : PROGRAM_START_DATE;
+      return saved ? normalizeDate(new Date(saved)) : normalizeDate(PROGRAM_START_DATE);
     } catch {
-      return PROGRAM_START_DATE;
+      return normalizeDate(PROGRAM_START_DATE);
     }
   });
 
