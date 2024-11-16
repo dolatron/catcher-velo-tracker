@@ -5,7 +5,7 @@
  * Used in the weekly schedule grid to show workout type and date.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, forwardRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { workoutTypes } from '@/data/workouts';
 
@@ -15,6 +15,10 @@ interface DayCardProps {
   date: Date;             // Date of the workout
   isExpanded: boolean;    // Whether this card is currently selected/expanded
   onClick: () => void;    // Handler for when card is clicked
+  ref?: React.RefObject<HTMLDivElement>; // Add ref to props
+  completed: boolean;    // Whether all exercises are completed
+  inProgress?: boolean;  // Add new prop
+  completionPercentage?: number;  // Add new prop
 }
 
 // Date formatting options for different parts of the date display
@@ -27,19 +31,22 @@ const DATE_FORMAT_OPTIONS = {
 // Base style definitions for consistent styling across the component
 const BASE_STYLES = {
   card: {
-    default: "cursor-pointer transition-colors duration-200",
+    default: "cursor-pointer transition-colors duration-200 h-[110px] sm:h-[150px] w-full", // Increased height
     expanded: "ring-2 ring-indigo-500",
+    completed: "opacity-60", // Remove border styling
+    inProgress: "bg-yellow-200 text-gray-900" // Change from ring to background color
   },
   date: {
     container: "text-xs",
-    weekday: "font-medium sm:inline hidden",
+    weekday: "font-medium", // Remove sm:inline hidden
     datePart: "font-normal"
   },
   workout: {
-    name: "font-medium text-sm sm:text-base mt-1 sm:mt-2",        // Primary workout name display
-    description: "text-xs mt-1.5 hidden sm:block opacity-90 font-normal",  // Additional workout info
-    rpe: "text-xs mt-1 hidden sm:block opacity-90 font-medium italic"      // RPE (Rate of Perceived Exertion) display
-  }
+    name: "font-medium text-sm sm:text-base mt-1 sm:mt-2",
+    description: "text-xs mt-1.5 opacity-90 font-normal line-clamp-4",
+    rpe: "text-xs mt-1 opacity-90 font-medium italic" // Remove hidden sm:block
+  },
+  percentage: "absolute top-2 right-2 text-xs font-medium rounded-full bg-black/10 px-1.5 py-0.5"
 } as const;
 
 /**
@@ -70,12 +77,15 @@ const getWorkoutInfo = (workout: string) => {
  * DayCard Component
  * Displays a card showing a single day's workout information
  */
-export const DayCard: React.FC<DayCardProps> = ({
+export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   workout,
   date,
   isExpanded,
-  onClick
-}) => {
+  onClick,
+  completed,
+  inProgress,
+  completionPercentage
+}, ref) => {
   // Memoized values to prevent unnecessary recalculations
   const workoutInfo = useMemo(() => getWorkoutInfo(workout), [workout]);
   
@@ -90,19 +100,27 @@ export const DayCard: React.FC<DayCardProps> = ({
   const cardClasses = useMemo(() => {
     const baseClasses = [
       BASE_STYLES.card.default,
-      workoutInfo.colorClass
+      // Only use the workout color if not in progress
+      inProgress ? '' : workoutInfo.colorClass
     ];
 
     if (isExpanded) {
       baseClasses.push(BASE_STYLES.card.expanded);
     }
+    if (inProgress) {
+      baseClasses.push(BASE_STYLES.card.inProgress);
+    }
+    if (completed) {
+      baseClasses.push(BASE_STYLES.card.completed);
+    }
 
     return baseClasses.join(' ');
-  }, [workoutInfo.colorClass, isExpanded]);
+  }, [workoutInfo.colorClass, isExpanded, completed, inProgress]);
 
   return (
     <Card 
-      className={cardClasses}
+      ref={ref}
+      className={`${cardClasses} group relative`} // Add relative positioning
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -114,6 +132,11 @@ export const DayCard: React.FC<DayCardProps> = ({
         }
       }}
     >
+      {completionPercentage !== undefined && completionPercentage > 0 && (
+        <div className={BASE_STYLES.percentage}>
+          {Math.round(completionPercentage)}%
+        </div>
+      )}
       <div className="p-3 space-y-1">
         {/* Date Display Section */}
         <div className={BASE_STYLES.date.container}>
@@ -147,7 +170,7 @@ export const DayCard: React.FC<DayCardProps> = ({
       </div>
     </Card>
   );
-};
+});
 
 // Memoize the entire component to prevent unnecessary rerenders
 // Only rerender if workout, date, or expanded state changes

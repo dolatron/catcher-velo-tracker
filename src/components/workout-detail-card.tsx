@@ -42,6 +42,8 @@ interface WorkoutDetailCardProps {
   onClose: () => void;                    // Close detail view callback
   weekIndex: number;                      // Week number (1-8)
   dayIndex: number;                       // Day number (1-7)
+  onBatchComplete: (exerciseIds: string[], completed: boolean) => void;  // Add new prop
+  onScroll?: () => void;  // Add new prop for scroll handling
 }
 
 /**
@@ -123,9 +125,11 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   day, 
   details, 
   onComplete, 
+  onBatchComplete,
   onClose,
   weekIndex,
-  dayIndex
+  dayIndex,
+  onScroll,
 }) => {
   // Get workout type information
   const baseWorkout = getBaseWorkout(day.workout);
@@ -140,8 +144,20 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
         { title: "Recovery", exercises: details.recovery }
       ];
 
+  // Get all exercise IDs for batch operations
+  const allExerciseIds = workoutSections.flatMap(section => 
+    (section.exercises || []).map(exercise => 
+      `${getSectionId(weekIndex, dayIndex, section.title)}-${exercise.id}`
+    )
+  );
+
+  const handleMarkComplete = () => {
+    onBatchComplete(allExerciseIds, true);
+    onClose();
+  };
+
   return (
-    <Card className="w-full bg-white p-3 sm:p-8 shadow-lg mb-3 sm:mb-8">
+    <Card className="w-full bg-white p-3 sm:p-6 shadow-lg">
       {/* Header Section */}
       <header className="flex justify-between items-start pb-3 sm:pb-6 border-b border-gray-200">
         <div>
@@ -193,6 +209,25 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
           ))}
         </div>
       )}
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => {
+            onBatchComplete(allExerciseIds, false);
+            onScroll?.(); // Scroll but don't close
+          }}
+          className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+        >
+          Start Over
+        </button>
+        <button
+          onClick={handleMarkComplete}  // This still closes via onClose()
+          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
+        >
+          Complete
+        </button>
+      </div>
     </Card>
   );
 };

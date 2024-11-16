@@ -5,7 +5,7 @@ export const workoutTypes: Record<string, WorkoutType> = {
 'Hybrid B': {
     name: 'Hybrid B',
     colorClass: 'bg-indigo-900 text-white hover:bg-indigo-950',
-    description: 'Light intent day focusing on mechanics and arm path',
+    description: 'Light intent day, focus on mechanics and arm path',
     rpeRange: '60-70% RPE',
     notes: 'All PlyoCare reps done @ 60-70% RPE. Use this day to work on things like your arm path, at a lower intent level.'
   },
@@ -25,7 +25,7 @@ export const workoutTypes: Record<string, WorkoutType> = {
   },
   'Plyo Velo': {
     name: 'Plyo Velo',
-    colorClass: 'bg-yellow-400 text-black hover:bg-yellow-500',
+    colorClass: 'bg-pink-600 text-white hover:bg-pink-700',
     description: 'Velocity development with radar tracking',
     notes: 'Use first two PlyoCare drills to warm up. Radar Blue Roll-ins, Stepbacks, Drop-Steps, and Half Stance.'
   },
@@ -38,7 +38,7 @@ export const workoutTypes: Record<string, WorkoutType> = {
   },
   'Velocity': {
     name: 'Velocity',
-    colorClass: 'bg-red-600 text-white hover:bg-red-700',
+    colorClass: 'bg-pink-800 text-white hover:bg-pink-900',
     description: 'High intent throwing with base throwdowns',
     notes: 'High intent throwing day with progressive throwdowns based on week: Weeks 3/4 use short spread (5oz, 6oz, 4oz), Weeks 5/6 advance to long spread (5oz, 6oz, 7oz, 5oz, 4oz, 3oz). Use radar gun to track velocities. Take at least 1 minute rest between weights.'
   },

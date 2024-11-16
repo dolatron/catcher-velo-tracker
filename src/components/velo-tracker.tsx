@@ -15,12 +15,13 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { workoutPrograms, generateSchedule } from '@/data/programs';
 import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
 import type { DayWorkout, WorkoutProgram } from '@/data/types';
+import { Card } from './ui/card';
 
 // Constants
 const STORAGE_KEY = 'workout-tracker-state';
@@ -84,7 +85,8 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
       return parsed.map(week =>
         week.map(day => ({
           ...day,
-          date: new Date(day.date)
+          date: new Date(day.date),
+          completed: day.completed || {}
         }))
       );
     } catch (error) {
@@ -138,10 +140,37 @@ const useStartDate = (): [Date, (date: Date) => void] => {
  */
 export default function WorkoutTracker() {
   const [startDate, setStartDate] = useStartDate();
-  // Change this line to use startDate instead of PROGRAM_START_DATE
-  const [schedule, setSchedule] = useState<Schedule>(() => generateSchedule(startDate));
+  // Use usePersistedSchedule instead of useState
+  const [schedule, setSchedule] = usePersistedSchedule();
   const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
   const weekRefs = useRef<(HTMLElement | null)[]>([]);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Calculate program progress
+  const progressStats = useMemo(() => {
+    const allDays = schedule.flat();
+    const totalDays = allDays.length;
+    const completedDays = allDays.filter(day => {
+      const baseWorkout = day.workout.split(' OR ')[0].trim();
+      const program = workoutPrograms[baseWorkout];
+      if (!program) return false;
+
+      const totalExercises = [
+        ...(program.warmup || []),
+        ...(program.throwing || []),
+        ...(program.recovery || [])
+      ].length;
+      
+      const completedCount = Object.values(day.completed).filter(Boolean).length;
+      return totalExercises > 0 && completedCount >= totalExercises;
+    }).length;
+
+    return {
+      percentage: Math.round((completedDays / totalDays) * 100),
+      completed: completedDays,
+      total: totalDays
+    };
+  }, [schedule]);
 
   /**
    * Get details for an expanded workout
@@ -164,7 +193,7 @@ export default function WorkoutTracker() {
   /**
    * Handle clicking on a workout card
    */
-  const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date) => {
+  const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date, cardEl: HTMLDivElement) => {
     const workoutId = createWorkoutId(weekIndex, dayIndex, date);
     
     setExpandedWorkoutId(current => {
@@ -173,11 +202,15 @@ export default function WorkoutTracker() {
       if (newId) {
         // Adding small delay to ensure DOM has updated
         setTimeout(() => {
-          const weekEl = weekRefs.current[weekIndex];
-          if (weekEl) {
-            const yOffset = -20; // 20px padding from top
-            const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
+          if (window.innerWidth < 640) { // Mobile viewport
+            cardEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else { // Desktop viewport
+            const weekEl = weekRefs.current[weekIndex];
+            if (weekEl) {
+              const yOffset = -20;
+              const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+              window.scrollTo({ top: y, behavior: 'smooth' });
+            }
           }
         }, 100);
       }
@@ -209,6 +242,29 @@ export default function WorkoutTracker() {
   }, [setSchedule]);
 
   /**
+   * Handle batch exercise completion
+   */
+  const handleBatchComplete = useCallback((weekIndex: number, dayIndex: number, exerciseIds: string[], completed: boolean) => {
+    setSchedule(prev => 
+      prev.map((week, wIndex) => 
+        week.map((day, dIndex) => {
+          if (wIndex === weekIndex && dIndex === dayIndex) {
+            const newCompleted = { ...day.completed };
+            exerciseIds.forEach(id => {
+              newCompleted[id] = completed;
+            });
+            return {
+              ...day,
+              completed: newCompleted
+            };
+          }
+          return day;
+        })
+      )
+    );
+  }, [setSchedule]);
+
+  /**
    * Handle start date change
    */
   const handleDateChange = useCallback((newDate: Date) => {
@@ -217,19 +273,63 @@ export default function WorkoutTracker() {
     setExpandedWorkoutId(null);
   }, [setStartDate]);
 
+  /**
+   * Handle scrolling when closing a workout
+   */
+  const handleWorkoutClose = useCallback((weekIndex: number, dayIndex: number) => {
+    const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
+    
+    setTimeout(() => {
+      if (window.innerWidth < 640) { // Mobile viewport
+        cardEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else { // Desktop viewport
+        const weekEl = weekRefs.current[weekIndex];
+        if (weekEl) {
+          const yOffset = -20;
+          const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }
+    }, 100);
+
+    setExpandedWorkoutId(null);
+  }, []);
+
+  /**
+   * Handle scrolling without closing the workout
+   */
+  const handleWorkoutScroll = useCallback((weekIndex: number, dayIndex: number) => {
+    const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
+    
+    setTimeout(() => {
+      if (window.innerWidth < 640) { // Mobile viewport
+        cardEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else { // Desktop viewport
+        const weekEl = weekRefs.current[weekIndex];
+        if (weekEl) {
+          const yOffset = -20;
+          const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }
+    }, 100);
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto p-2 sm:p-6">
-      {/* Program Title */}
       <h1 className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-center">
         8-Week Catcher Velocity Program
       </h1>
       
-      {/* Add DatePicker component */}
-      <DatePicker 
-        selectedDate={startDate}
-        onDateChange={handleDateChange}
-      />
-      
+      {/* Program Header */}
+      <div className="mb-6">
+        <DatePicker 
+          selectedDate={startDate}
+          onDateChange={handleDateChange}
+          progress={progressStats}
+        />
+      </div>
+
       {/* Weekly Schedule Display */}
       <div className="space-y-6 sm:space-y-12">
         {schedule.map((week, weekIndex) => {
@@ -248,37 +348,104 @@ export default function WorkoutTracker() {
               <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4">
                 Week {weekIndex + 1}
               </h2>
-
               <div className="space-y-2 sm:space-y-4">
                 {/* Grid of Day Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 sm:gap-4">
+                <div className="relative grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-2 sm:gap-4">
                   {week.map((day, dayIndex) => {
                     const workoutId = createWorkoutId(weekIndex, dayIndex, day.date);
+                    const isExpanded = expandedWorkoutId === workoutId;
+                    
+                    // Get workout program to check total exercises
+                    const baseWorkout = day.workout.split(' OR ')[0].trim();
+                    const program = workoutPrograms[baseWorkout];
+                    
+                    // Calculate if all exercises are completed
+                    const isCompleted = program ? (() => {
+                      const totalExercises = [
+                        ...(program.warmup || []),
+                        ...(program.throwing || []),
+                        ...(program.recovery || [])
+                      ].length;
+                      const completedCount = Object.values(day.completed).filter(Boolean).length;
+                      return totalExercises > 0 && completedCount >= totalExercises;
+                    })() : false;
+
+                    const inProgress = program ? (() => {
+                      const completedCount = Object.values(day.completed).filter(Boolean).length;
+                      return completedCount > 0 && !isCompleted;
+                    })() : false;
+
+                    const totalExercises = program ? [
+                      ...(program.warmup || []),
+                      ...(program.throwing || []),
+                      ...(program.recovery || [])
+                    ].length : 0;
+
+                    const completedCount = Object.values(day.completed).filter(Boolean).length;
+                    const completionPercentage = totalExercises > 0 
+                      ? (completedCount / totalExercises) * 100 
+                      : undefined;
+
                     return (
-                      <DayCard
-                        key={workoutId}
-                        workout={day.workout}
-                        date={day.date}
-                        isExpanded={expandedWorkoutId === workoutId}
-                        onClick={() => handleCardClick(weekIndex, dayIndex, day.date)}
-                      />
+                      <div key={workoutId} className="relative">
+                        <DayCard
+                          ref={(el) => { cardRefs.current[`${weekIndex}-${dayIndex}`] = el; }}
+                          workout={day.workout}
+                          date={day.date}
+                          isExpanded={isExpanded}
+                          completed={isCompleted}
+                          inProgress={inProgress}
+                          completionPercentage={completionPercentage}
+                          onClick={() => {
+                            const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
+                            if (cardEl) {
+                              handleCardClick(weekIndex, dayIndex, day.date, cardEl);
+                            }
+                          }}
+                        />
+                        {/* Expanded Workout Details - Only visible on mobile */}
+                        {isExpanded && (
+                          <div className="block sm:hidden mt-2">
+                            <WorkoutDetailCard
+                              day={day}
+                              details={getWorkoutDetails(workoutId)?.details ?? {} as WorkoutProgram}
+                              onComplete={(exerciseId) => {
+                                handleExerciseComplete(weekIndex, dayIndex, exerciseId);
+                              }}
+                              onClose={() => handleWorkoutClose(weekIndex, dayIndex)}
+                              weekIndex={weekIndex}
+                              dayIndex={dayIndex}
+                              onBatchComplete={(exerciseIds, completed) => 
+                                handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed)
+                              }
+                              onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
+                            />
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
+                  {/* Expanded Workout Details - Only visible on desktop */}
+                  {expandedWorkoutId && getWorkoutDetails(expandedWorkoutId) && (
+                    <div className="hidden sm:block col-span-full mt-2">
+                      <WorkoutDetailCard
+                        day={getWorkoutDetails(expandedWorkoutId)!.day}
+                        details={getWorkoutDetails(expandedWorkoutId)!.details}
+                        onComplete={(exerciseId) => {
+                          const { weekIndex, dayIndex } = getWorkoutDetails(expandedWorkoutId)!;
+                          handleExerciseComplete(weekIndex, dayIndex, exerciseId);
+                        }}
+                        onClose={() => handleWorkoutClose(getWorkoutDetails(expandedWorkoutId)!.weekIndex, getWorkoutDetails(expandedWorkoutId)!.dayIndex)}
+                        weekIndex={getWorkoutDetails(expandedWorkoutId)!.weekIndex}
+                        dayIndex={getWorkoutDetails(expandedWorkoutId)!.dayIndex}
+                        onBatchComplete={(exerciseIds, completed) => 
+                          handleBatchComplete(getWorkoutDetails(expandedWorkoutId)!.weekIndex, getWorkoutDetails(expandedWorkoutId)!.dayIndex, exerciseIds, completed)
+                        }
+                        onScroll={() => handleWorkoutScroll(getWorkoutDetails(expandedWorkoutId)!.weekIndex, getWorkoutDetails(expandedWorkoutId)!.dayIndex)}
+                      />
+                    </div>
+                  )}
                 </div>
-
-                {/* Expanded Workout Details */}
-                {expandedDetails && (
-                  <WorkoutDetailCard
-                    day={expandedDetails.day}
-                    details={expandedDetails.details}
-                    onComplete={(exerciseId) => {
-                      handleExerciseComplete(expandedDetails.weekIndex, expandedDetails.dayIndex, exerciseId);
-                    }}
-                    onClose={() => setExpandedWorkoutId(null)}
-                    weekIndex={expandedDetails.weekIndex}
-                    dayIndex={expandedDetails.dayIndex}
-                  />
-                )}
               </div>
             </section>
           );

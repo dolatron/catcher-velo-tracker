@@ -1,23 +1,38 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card } from './ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ConfirmModal } from './ui/confirm-modal';
 
 interface DatePickerProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  progress: {
+    percentage: number;
+    completed: number;
+    total: number;
+  };
 }
 
-export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChange }) => {
+export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChange, progress }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(selectedDate);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTempDate(new Date(event.target.value));
   };
 
   const handleApplyDate = () => {
+    if (tempDate.getTime() !== selectedDate.getTime()) {
+      setShowConfirmModal(true);
+    } else {
+      setIsExpanded(false);
+    }
+  };
+
+  const handleConfirmDateChange = () => {
     onDateChange(tempDate);
     setIsExpanded(false);
   };
@@ -35,15 +50,20 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
   };
 
   return (
-    <Card className="p-4 mb-6">
+    <Card className="p-4">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between text-left"
+        className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between text-left"
       >
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium mb-1 sm:mb-0">
           Program Start Date: {formatDateForDisplay(selectedDate)}
         </span>
-        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        <div className="text-sm text-gray-600">
+          Progress: {progress.percentage}% ({progress.completed}/{progress.total} days)
+        </div>
+        <div className="absolute right-4 top-4">
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
       </button>
 
       {isExpanded && (
@@ -68,6 +88,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
           </p>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmDateChange}
+        title="Program Date Change"
+        message="Changing the start date will reset all progress. Are you sure you want to continue?"
+        confirmText="Change Date"
+        cancelText="Keep Current Progress"
+      />
     </Card>
   );
 };
