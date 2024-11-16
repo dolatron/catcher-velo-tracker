@@ -19,12 +19,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { workoutPrograms, generateSchedule } from '@/data/programs';
 import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
+import { DatePicker } from '@/components/date-picker';
 import type { DayWorkout, WorkoutProgram } from '@/data/types';
 
 // Constants
 const STORAGE_KEY = 'workout-tracker-state';
-// Start date is set to November 17, 2024 (month is 0-based)
-const PROGRAM_START_DATE = new Date(2024, 10, 17);
+const START_DATE_KEY = 'program-start-date';
+// Change this line to use today's date as default
+const PROGRAM_START_DATE = new Date();
 const ERROR_MESSAGES = {
   SAVE_FAILED: 'Failed to save schedule:',
   LOAD_FAILED: 'Failed to load saved schedule:',
@@ -104,11 +106,40 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
 };
 
 /**
+ * Custom Hook: useStartDate
+ * 
+ * Manages the start date state and its persistence in localStorage.
+ */
+const useStartDate = (): [Date, (date: Date) => void] => {
+  const [startDate, setStartDate] = useState<Date>(() => {
+    if (typeof window === 'undefined') return PROGRAM_START_DATE;
+    
+    try {
+      const saved = localStorage.getItem(START_DATE_KEY);
+      return saved ? new Date(saved) : PROGRAM_START_DATE;
+    } catch {
+      return PROGRAM_START_DATE;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(START_DATE_KEY, startDate.toISOString());
+    } catch (error) {
+      console.error('Failed to save start date:', error);
+    }
+  }, [startDate]);
+
+  return [startDate, setStartDate];
+};
+
+/**
  * Main WorkoutTracker Component
  */
 export default function WorkoutTracker() {
-  // State management
-  const [schedule, setSchedule] = usePersistedSchedule();
+  const [startDate, setStartDate] = useStartDate();
+  // Change this line to use startDate instead of PROGRAM_START_DATE
+  const [schedule, setSchedule] = useState<Schedule>(() => generateSchedule(startDate));
   const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
   const weekRefs = useRef<(HTMLElement | null)[]>([]);
 
@@ -177,12 +208,27 @@ export default function WorkoutTracker() {
     );
   }, [setSchedule]);
 
+  /**
+   * Handle start date change
+   */
+  const handleDateChange = useCallback((newDate: Date) => {
+    setStartDate(newDate);
+    setSchedule(generateSchedule(newDate));
+    setExpandedWorkoutId(null);
+  }, [setStartDate]);
+
   return (
     <div className="max-w-6xl mx-auto p-2 sm:p-6">
       {/* Program Title */}
       <h1 className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-center">
         8-Week Catcher Velocity Program
       </h1>
+      
+      {/* Add DatePicker component */}
+      <DatePicker 
+        selectedDate={startDate}
+        onDateChange={handleDateChange}
+      />
       
       {/* Weekly Schedule Display */}
       <div className="space-y-6 sm:space-y-12">
