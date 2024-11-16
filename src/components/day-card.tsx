@@ -33,7 +33,7 @@ const BASE_STYLES = {
   card: {
     default: "cursor-pointer transition-colors duration-200 h-[110px] sm:h-[150px] w-full", // Increased height
     expanded: "ring-2 ring-indigo-500",
-    completed: "opacity-60", // Remove border styling
+    completed: "opacity-60 before:absolute before:inset-0 before:bg-[linear-gradient(135deg,transparent_45%,#666_45%,#666_55%,transparent_55%)] before:bg-[length:10px_10px]", // Changed 45deg to 135deg
     inProgress: "bg-yellow-200 text-gray-900" // Change from ring to background color
   },
   date: {
@@ -120,7 +120,7 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   return (
     <Card 
       ref={ref}
-      className={`${cardClasses} group relative`} // Add relative positioning
+      className={`${cardClasses} group relative overflow-hidden`} // Add overflow-hidden to contain diagonal lines
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -171,6 +171,8 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
     </Card>
   );
 });
+
+DayCard.displayName = 'DayCard';
 
 // Memoize the entire component to prevent unnecessary rerenders
 // Only rerender if workout, date, or expanded state changes

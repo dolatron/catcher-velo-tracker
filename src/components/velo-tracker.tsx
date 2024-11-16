@@ -21,7 +21,6 @@ import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
 import type { DayWorkout, WorkoutProgram } from '@/data/types';
-import { Card } from './ui/card';
 
 // Constants
 const STORAGE_KEY = 'workout-tracker-state';
@@ -217,7 +216,7 @@ export default function WorkoutTracker() {
       
       return newId;
     });
-  }, []);
+  }, []); 
 
   /**
    * Handle exercise completion toggle
@@ -271,7 +270,7 @@ export default function WorkoutTracker() {
     setStartDate(newDate);
     setSchedule(generateSchedule(newDate));
     setExpandedWorkoutId(null);
-  }, [setStartDate]);
+  }, [setStartDate, setSchedule]);  // Add setSchedule to dependencies
 
   /**
    * Handle scrolling when closing a workout
@@ -333,11 +332,6 @@ export default function WorkoutTracker() {
       {/* Weekly Schedule Display */}
       <div className="space-y-6 sm:space-y-12">
         {schedule.map((week, weekIndex) => {
-          // Get details for expanded workout in this week, if any
-          const expandedDetails = expandedWorkoutId?.startsWith(`week${weekIndex}`) 
-            ? getWorkoutDetails(expandedWorkoutId)
-            : null;
-
           return (
             <section 
               key={`week-${weekIndex}`} 
@@ -426,25 +420,29 @@ export default function WorkoutTracker() {
                     );
                   })}
                   {/* Expanded Workout Details - Only visible on desktop */}
-                  {expandedWorkoutId && getWorkoutDetails(expandedWorkoutId) && (
-                    <div className="hidden sm:block col-span-full mt-2">
-                      <WorkoutDetailCard
-                        day={getWorkoutDetails(expandedWorkoutId)!.day}
-                        details={getWorkoutDetails(expandedWorkoutId)!.details}
-                        onComplete={(exerciseId) => {
-                          const { weekIndex, dayIndex } = getWorkoutDetails(expandedWorkoutId)!;
-                          handleExerciseComplete(weekIndex, dayIndex, exerciseId);
-                        }}
-                        onClose={() => handleWorkoutClose(getWorkoutDetails(expandedWorkoutId)!.weekIndex, getWorkoutDetails(expandedWorkoutId)!.dayIndex)}
-                        weekIndex={getWorkoutDetails(expandedWorkoutId)!.weekIndex}
-                        dayIndex={getWorkoutDetails(expandedWorkoutId)!.dayIndex}
-                        onBatchComplete={(exerciseIds, completed) => 
-                          handleBatchComplete(getWorkoutDetails(expandedWorkoutId)!.weekIndex, getWorkoutDetails(expandedWorkoutId)!.dayIndex, exerciseIds, completed)
-                        }
-                        onScroll={() => handleWorkoutScroll(getWorkoutDetails(expandedWorkoutId)!.weekIndex, getWorkoutDetails(expandedWorkoutId)!.dayIndex)}
-                      />
-                    </div>
-                  )}
+                  {expandedWorkoutId && (() => {
+                    const details = getWorkoutDetails(expandedWorkoutId);
+                    if (!details) return null;
+                    
+                    return (
+                      <div className="hidden sm:block col-span-full mt-2">
+                        <WorkoutDetailCard
+                          day={details.day}
+                          details={details.details}
+                          onComplete={(exerciseId) => {
+                            handleExerciseComplete(details.weekIndex, details.dayIndex, exerciseId);
+                          }}
+                          onClose={() => handleWorkoutClose(details.weekIndex, details.dayIndex)}
+                          weekIndex={details.weekIndex}
+                          dayIndex={details.dayIndex}
+                          onBatchComplete={(exerciseIds, completed) => 
+                            handleBatchComplete(details.weekIndex, details.dayIndex, exerciseIds, completed)
+                          }
+                          onScroll={() => handleWorkoutScroll(details.weekIndex, details.dayIndex)}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </section>

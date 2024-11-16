@@ -19,6 +19,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
   const [isExpanded, setIsExpanded] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(selectedDate);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showStartOverModal, setShowStartOverModal] = useState(false);  // Add new state
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTempDate(new Date(event.target.value));
@@ -35,6 +36,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
   const handleConfirmDateChange = () => {
     onDateChange(tempDate);
     setIsExpanded(false);
+  };
+
+  const handleStartOver = () => {
+    const today = new Date();
+    setTempDate(today);
+    onDateChange(today);
+    setIsExpanded(false);
+    setShowStartOverModal(false);
   };
 
   const formatDateForDisplay = (date: Date) => {
@@ -82,6 +91,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
             >
               Set Date
             </button>
+            <button
+              onClick={() => setShowStartOverModal(true)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Start Over
+            </button>
           </div>
           <p className="text-xs text-gray-500">
             Select a date and click Apply to start your 8-week program from that date
@@ -96,6 +111,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
         title="Program Date Change"
         message="Changing the start date will reset all progress. Are you sure you want to continue?"
         confirmText="Change Date"
+        cancelText="Keep Current Progress"
+      />
+
+      <ConfirmModal
+        isOpen={showStartOverModal}
+        onClose={() => setShowStartOverModal(false)}
+        onConfirm={handleStartOver}
+        title="Start Program Over"
+        message="This will reset all progress and set the start date to today. Are you sure you want to continue?"
+        confirmText="Start Over"
         cancelText="Keep Current Progress"
       />
     </Card>

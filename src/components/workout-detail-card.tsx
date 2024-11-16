@@ -219,7 +219,7 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
           }}
           className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
         >
-          Start Over
+          Clear Progress
         </button>
         <button
           onClick={handleMarkComplete}  // This still closes via onClose()
