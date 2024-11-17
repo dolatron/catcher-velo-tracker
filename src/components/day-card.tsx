@@ -20,6 +20,7 @@ interface DayCardProps {
   completed: boolean;    // Whether all exercises are completed
   inProgress?: boolean;  // Add new prop
   completionPercentage?: number;  // Add new prop
+  viewMode?: 'calendar' | 'list';
 }
 
 // Date formatting options for different parts of the date display
@@ -32,22 +33,32 @@ const DATE_FORMAT_OPTIONS = {
 // Base style definitions for consistent styling across the component
 const BASE_STYLES = {
   card: {
-    default: "cursor-pointer transition-colors duration-200 h-[110px] sm:h-[150px] w-full", // Increased height
+    default: "cursor-pointer transition-colors duration-200 w-full", // Remove fixed height
+    calendar: "h-[80px] sm:h-[150px]", // Reduced mobile height
+    list: "min-h-[80px]",
     expanded: "ring-2 ring-indigo-500",
     completed: "opacity-60 before:absolute before:inset-0 before:bg-[linear-gradient(135deg,transparent_45%,#666_45%,#666_55%,transparent_55%)] before:bg-[length:10px_10px]", // Changed 45deg to 135deg
     inProgress: "bg-yellow-200 text-gray-900" // Change from ring to background color
   },
   date: {
-    container: "text-xs",
-    weekday: "font-medium", // Remove sm:inline hidden
+    container: (viewMode: string) => viewMode === 'calendar' ? "text-[9px] sm:text-xs" : "text-xs sm:text-xs",
+    weekday: "font-medium",
     datePart: "font-normal"
   },
   workout: {
-    name: "font-medium text-sm sm:text-base mt-1 sm:mt-2",
-    description: "text-xs mt-1.5 opacity-90 font-normal line-clamp-4",
-    rpe: "text-xs mt-1 opacity-90 font-medium italic" // Remove hidden sm:block
+    name: (viewMode: 'calendar' | 'list') => viewMode === 'calendar' 
+      ? "font-medium text-[9px] sm:text-base mt-0.5 sm:mt-2 line-clamp-2 sm:line-clamp-none"
+      : "font-medium text-sm sm:text-base mt-1 sm:mt-2",
+    description: (viewMode: 'calendar' | 'list') => viewMode === 'calendar'
+      ? "hidden sm:block text-xs mt-1.5 opacity-90 font-normal line-clamp-4"
+      : "block text-xs mt-1.5 opacity-90 font-normal line-clamp-4",
+    rpe: (viewMode: 'calendar' | 'list') => viewMode === 'calendar'
+      ? "hidden sm:block text-xs mt-1 opacity-90 font-medium italic"
+      : "block text-xs mt-1 opacity-90 font-medium italic"
   },
-  percentage: "absolute top-2 right-2 text-xs font-medium rounded-full bg-black/10 px-1.5 py-0.5"
+  percentage: (viewMode: 'calendar' | 'list') => viewMode === 'calendar'
+    ? "absolute top-1 right-1 sm:top-2 sm:right-2 text-[9px] sm:text-xs font-medium rounded-full bg-black/10 px-1 sm:px-1.5 py-0.5"
+    : "absolute top-2 right-2 text-xs font-medium rounded-full bg-black/10 px-1.5 py-0.5"
 } as const;
 
 /**
@@ -76,7 +87,8 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   onClick,
   completed,
   inProgress,
-  completionPercentage
+  completionPercentage,
+  viewMode = 'calendar'
 }, ref) => {
   // Memoized values to prevent unnecessary recalculations
   const workoutInfo = useMemo(() => getWorkoutInfo(workout), [workout]);
@@ -92,6 +104,7 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   const cardClasses = useMemo(() => {
     const baseClasses = [
       BASE_STYLES.card.default,
+      BASE_STYLES.card[viewMode],
       // Only use the workout color if not in progress
       inProgress ? '' : workoutInfo.colorClass
     ];
@@ -107,7 +120,7 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
     }
 
     return baseClasses.join(' ');
-  }, [workoutInfo.colorClass, isExpanded, completed, inProgress]);
+  }, [workoutInfo.colorClass, isExpanded, completed, inProgress, viewMode]);
 
   return (
     <Card 
@@ -125,13 +138,13 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
       }}
     >
       {completionPercentage !== undefined && completionPercentage > 0 && (
-        <div className={BASE_STYLES.percentage}>
+        <div className={BASE_STYLES.percentage(viewMode)}>
           {Math.round(completionPercentage)}%
         </div>
       )}
-      <div className="p-3 space-y-1">
+      <div className="p-2 sm:p-3 space-y-0.5 sm:space-y-1">
         {/* Date Display Section */}
-        <div className={BASE_STYLES.date.container}>
+        <div className={BASE_STYLES.date.container(viewMode)}>
           <span className={BASE_STYLES.date.weekday}>
             {formattedDate.weekday}
           </span>
@@ -142,20 +155,20 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
         </div>
 
         {/* Workout Name */}
-        <div className={BASE_STYLES.workout.name}>
+        <div className={BASE_STYLES.workout.name(viewMode)}>
           {workoutInfo.name}
         </div>
 
         {/* Workout Description - Only shown on larger screens */}
         {workoutInfo.description && (
-          <div className={BASE_STYLES.workout.description}>
+          <div className={BASE_STYLES.workout.description(viewMode)}>
             {workoutInfo.description}
           </div>
         )}
 
         {/* RPE Range - Only shown on larger screens */}
         {workoutInfo.rpeRange && (
-          <div className={BASE_STYLES.workout.rpe}>
+          <div className={BASE_STYLES.workout.rpe(viewMode)}>
             {workoutInfo.rpeRange}
           </div>
         )}

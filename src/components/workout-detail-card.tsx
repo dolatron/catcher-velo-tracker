@@ -44,6 +44,7 @@ interface WorkoutDetailCardProps {
   dayIndex: number;                       // Day number (1-7)
   onBatchComplete: (exerciseIds: string[], completed: boolean) => void;  // Add new prop
   onScroll?: () => void;  // Add new prop for scroll handling
+  viewMode?: 'calendar' | 'list';  // Add new prop for view mode
 }
 
 /**
@@ -130,6 +131,7 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   weekIndex,
   dayIndex,
   onScroll,
+  viewMode = 'calendar'
 }) => {
   // Get workout type information
   const baseWorkout = getBaseWorkout(day.workout);
@@ -157,7 +159,9 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   };
 
   return (
-    <Card className="w-full bg-white p-3 sm:p-6 shadow-lg">
+    <Card className={`w-full bg-white p-3 sm:p-6 shadow-lg ${
+      viewMode === 'list' ? 'mt-2' : viewMode === 'calendar' ? 'mt-4' : ''
+    }`}>
       {/* Header Section */}
       <header className="flex justify-between items-start pb-3 sm:pb-6 border-b border-gray-200">
         <div>

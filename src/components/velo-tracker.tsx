@@ -22,6 +22,7 @@ import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
 import type { DayWorkout, WorkoutProgram } from '@/data/types';
 import { normalizeDate } from '@/utils/common';
+import { LayoutGrid, LayoutList } from 'lucide-react';
 
 // Constants
 const STORAGE_KEY = 'workout-tracker-state';
@@ -32,6 +33,9 @@ const ERROR_MESSAGES = {
   SAVE_FAILED: 'Failed to save schedule:',
   LOAD_FAILED: 'Failed to load saved schedule:',
 } as const;
+
+// Add new constant at the top with other constants
+const VIEW_MODE_KEY = 'workout-view-mode';
 
 // Type Definitions
 /**
@@ -59,7 +63,7 @@ type Schedule = DayWorkout[][];
  * Creates a unique identifier for a workout
  */
 const createWorkoutId = (weekIndex: number, dayIndex: number, date: Date): string => 
-  `week${weekIndex}-day${dayIndex}-${date.toISOString()}`;
+  `week${weekIndex}-day${dayIndex}`; // Remove date from ID, week and day indices are sufficient
 
 /**
  * Custom Hook: usePersistedSchedule
@@ -140,11 +144,25 @@ const useStartDate = (): [Date, (date: Date) => void] => {
  */
 export default function WorkoutTracker() {
   const [startDate, setStartDate] = useStartDate();
-  // Use usePersistedSchedule instead of useState
   const [schedule, setSchedule] = usePersistedSchedule();
   const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
   const weekRefs = useRef<(HTMLElement | null)[]>([]);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  // Initialize viewMode from localStorage
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'calendar';
+    return (localStorage.getItem(VIEW_MODE_KEY) as 'calendar' | 'list') || 'calendar';
+  });
+
+  // Save viewMode changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, viewMode);
+    } catch (error) {
+      console.error('Failed to save view mode:', error);
+    }
+  }, [viewMode]);
 
   // Calculate program progress
   const progressStats = useMemo(() => {
@@ -176,9 +194,9 @@ export default function WorkoutTracker() {
    * Get details for an expanded workout
    */
   const getWorkoutDetails = useCallback((workoutId: string): WorkoutDetails | null => {
-    const parts = workoutId.split('-');
-    const weekIndex = parseInt(parts[0].replace('week', ''));
-    const dayIndex = parseInt(parts[1].replace('day', ''));
+    const [weekPart, dayPart] = workoutId.split('-');
+    const weekIndex = parseInt(weekPart.replace('week', ''));
+    const dayIndex = parseInt(dayPart.replace('day', ''));
     
     const day = schedule[weekIndex]?.[dayIndex];
     if (!day) return null;
@@ -196,28 +214,29 @@ export default function WorkoutTracker() {
   const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date, cardEl: HTMLDivElement) => {
     const workoutId = createWorkoutId(weekIndex, dayIndex, date);
     
-    setExpandedWorkoutId(current => {
-      const newId = current === workoutId ? null : workoutId;
-      
-      if (newId) {
-        // Adding small delay to ensure DOM has updated
-        setTimeout(() => {
-          if (window.innerWidth < 640) { // Mobile viewport
-            cardEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else { // Desktop viewport
-            const weekEl = weekRefs.current[weekIndex];
-            if (weekEl) {
-              const yOffset = -20;
-              const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
-              window.scrollTo({ top: y, behavior: 'smooth' });
-            }
-          }
-        }, 100);
+    // If clicking the same workout, close it
+    if (expandedWorkoutId === workoutId) {
+      setExpandedWorkoutId(null);
+      return;
+    }
+    
+    // Always close previous workout before opening new one
+    setExpandedWorkoutId(workoutId);
+    
+    // Scroll after state update
+    setTimeout(() => {
+      if (viewMode === 'list' || window.innerWidth < 640) {
+        cardEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        const weekEl = weekRefs.current[weekIndex];
+        if (weekEl) {
+          const yOffset = -20;
+          const y = weekEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
       }
-      
-      return newId;
-    });
-  }, []); 
+    }, 100);
+  }, [expandedWorkoutId, viewMode]);
 
   /**
    * Handle exercise completion toggle
@@ -277,12 +296,13 @@ export default function WorkoutTracker() {
    * Handle scrolling when closing a workout
    */
   const handleWorkoutClose = useCallback((weekIndex: number, dayIndex: number) => {
-    const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
+    setExpandedWorkoutId(null); // Always close when requested
     
+    const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
     setTimeout(() => {
-      if (window.innerWidth < 640) { // Mobile viewport
+      if (viewMode === 'list' || window.innerWidth < 640) {
         cardEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else { // Desktop viewport
+      } else {
         const weekEl = weekRefs.current[weekIndex];
         if (weekEl) {
           const yOffset = -20;
@@ -291,9 +311,7 @@ export default function WorkoutTracker() {
         }
       }
     }, 100);
-
-    setExpandedWorkoutId(null);
-  }, []);
+  }, [viewMode]); // Add viewMode to dependencies
 
   /**
    * Handle scrolling without closing the workout
@@ -322,30 +340,53 @@ export default function WorkoutTracker() {
       </h1>
       
       {/* Program Header */}
-      <div className="mb-6">
+      <div className="mb-6 space-y-4">
         <DatePicker 
           selectedDate={startDate}
           onDateChange={handleDateChange}
           progress={progressStats}
         />
+        <div className="flex justify-end">
+          <button
+            onClick={() => setViewMode(v => v === 'calendar' ? 'list' : 'calendar')}
+            className="text-sm font-medium text-gray-600 hover:text-gray-800 flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100"
+          >
+            {viewMode === 'calendar' ? (
+              <>
+                <LayoutList className="w-4 h-4" />
+                Switch to List View
+              </>
+            ) : (
+              <>
+                <LayoutGrid className="w-4 h-4" />
+                Switch to Calendar View
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Weekly Schedule Display */}
       <div className="space-y-6 sm:space-y-12">
         {schedule.map((week, weekIndex) => {
+          const expandedInThisWeek = expandedWorkoutId?.startsWith(`week${weekIndex}`);
+          
           return (
             <section 
               key={`week-${weekIndex}`} 
               className="week-section"
               ref={el => { weekRefs.current[weekIndex] = el; }}
             >
-              {/* Week Header */}
               <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4">
                 Week {weekIndex + 1}
               </h2>
               <div className="space-y-2 sm:space-y-4">
-                {/* Grid of Day Cards */}
-                <div className="relative grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-2 sm:gap-4">
+                {/* Grid/List of Day Cards */}
+                <div className={`grid gap-1 sm:gap-4 auto-rows-min ${
+                  viewMode === 'calendar' 
+                    ? 'grid-cols-7 md:grid-cols-7' 
+                    : 'grid-cols-1'
+                }`}>
                   {week.map((day, dayIndex) => {
                     const workoutId = createWorkoutId(weekIndex, dayIndex, day.date);
                     const isExpanded = expandedWorkoutId === workoutId;
@@ -382,7 +423,7 @@ export default function WorkoutTracker() {
                       : undefined;
 
                     return (
-                      <div key={workoutId} className="relative">
+                      <div key={workoutId} className={viewMode === 'list' ? 'space-y-2' : ''}>
                         <DayCard
                           ref={(el) => { cardRefs.current[`${weekIndex}-${dayIndex}`] = el; }}
                           workout={day.workout}
@@ -397,53 +438,58 @@ export default function WorkoutTracker() {
                               handleCardClick(weekIndex, dayIndex, day.date, cardEl);
                             }
                           }}
+                          viewMode={viewMode}
                         />
-                        {/* Expanded Workout Details - Only visible on mobile */}
-                        {isExpanded && (
-                          <div className="block sm:hidden mt-2">
-                            <WorkoutDetailCard
-                              day={day}
-                              details={getWorkoutDetails(workoutId)?.details ?? {} as WorkoutProgram}
-                              onComplete={(exerciseId) => {
-                                handleExerciseComplete(weekIndex, dayIndex, exerciseId);
-                              }}
-                              onClose={() => handleWorkoutClose(weekIndex, dayIndex)}
-                              weekIndex={weekIndex}
-                              dayIndex={dayIndex}
-                              onBatchComplete={(exerciseIds, completed) => 
-                                handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed)
-                              }
-                              onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
-                            />
-                          </div>
+                        {/* Render detail card immediately after day card in list view */}
+                        {isExpanded && viewMode === 'list' && (
+                          <WorkoutDetailCard
+                            day={day}
+                            details={getWorkoutDetails(workoutId)?.details ?? {} as WorkoutProgram}
+                            onComplete={(exerciseId) => {
+                              handleExerciseComplete(weekIndex, dayIndex, exerciseId);
+                            }}
+                            onClose={() => handleWorkoutClose(weekIndex, dayIndex)}
+                            weekIndex={weekIndex}
+                            dayIndex={dayIndex}
+                            onBatchComplete={(exerciseIds, completed) => 
+                              handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed)
+                            }
+                            onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
+                            viewMode={viewMode}
+                          />
                         )}
                       </div>
                     );
                   })}
-                  {/* Expanded Workout Details - Only visible on desktop */}
-                  {expandedWorkoutId && (() => {
-                    const details = getWorkoutDetails(expandedWorkoutId);
-                    if (!details) return null;
-                    
-                    return (
-                      <div className="hidden sm:block col-span-full mt-2">
-                        <WorkoutDetailCard
-                          day={details.day}
-                          details={details.details}
-                          onComplete={(exerciseId) => {
-                            handleExerciseComplete(details.weekIndex, details.dayIndex, exerciseId);
-                          }}
-                          onClose={() => handleWorkoutClose(details.weekIndex, details.dayIndex)}
-                          weekIndex={details.weekIndex}
-                          dayIndex={details.dayIndex}
-                          onBatchComplete={(exerciseIds, completed) => 
-                            handleBatchComplete(details.weekIndex, details.dayIndex, exerciseIds, completed)
-                          }
-                          onScroll={() => handleWorkoutScroll(details.weekIndex, details.dayIndex)}
-                        />
-                      </div>
-                    );
-                  })()}
+                  
+                  {/* Only render detail card here for calendar view */}
+                  {viewMode === 'calendar' && expandedWorkoutId?.startsWith(`week${weekIndex}`) && (
+                    <div className="col-span-7 mt-2">
+                      <WorkoutDetailCard
+                        day={week[parseInt(expandedWorkoutId.split('-')[1].replace('day', ''))]}
+                        details={getWorkoutDetails(expandedWorkoutId)?.details ?? {} as WorkoutProgram}
+                        onComplete={(exerciseId) => {
+                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                          handleExerciseComplete(weekIndex, dayIndex, exerciseId);
+                        }}
+                        onClose={() => {
+                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                          handleWorkoutClose(weekIndex, dayIndex);
+                        }}
+                        weekIndex={weekIndex}
+                        dayIndex={parseInt(expandedWorkoutId.split('-')[1].replace('day', ''))}
+                        onBatchComplete={(exerciseIds, completed) => {
+                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                          handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed);
+                        }}
+                        onScroll={() => {
+                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                          handleWorkoutScroll(weekIndex, dayIndex);
+                        }}
+                        viewMode={viewMode}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
