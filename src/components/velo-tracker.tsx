@@ -62,7 +62,7 @@ type Schedule = DayWorkout[][];
 /**
  * Creates a unique identifier for a workout
  */
-const createWorkoutId = (weekIndex: number, dayIndex: number, date: Date): string => 
+const createWorkoutId = (weekIndex: number, dayIndex: number): string => 
   `week${weekIndex}-day${dayIndex}`; // Remove date from ID, week and day indices are sufficient
 
 /**
@@ -212,7 +212,7 @@ export default function WorkoutTracker() {
    * Handle clicking on a workout card
    */
   const handleCardClick = useCallback((weekIndex: number, dayIndex: number, date: Date, cardEl: HTMLDivElement) => {
-    const workoutId = createWorkoutId(weekIndex, dayIndex, date);
+    const workoutId = createWorkoutId(weekIndex, dayIndex);
     
     // If clicking the same workout, close it
     if (expandedWorkoutId === workoutId) {
@@ -368,19 +368,17 @@ export default function WorkoutTracker() {
 
       {/* Weekly Schedule Display */}
       <div className="space-y-6 sm:space-y-12">
-        {schedule.map((week, weekIndex) => {
-          const expandedInThisWeek = expandedWorkoutId?.startsWith(`week${weekIndex}`);
-          
-          return (
-            <section 
-              key={`week-${weekIndex}`} 
-              className="week-section"
-              ref={el => { weekRefs.current[weekIndex] = el; }}
-            >
-              <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4">
-                Week {weekIndex + 1}
-              </h2>
-              <div className="space-y-2 sm:space-y-4">
+        {schedule.map((week, weekIndex) => (
+          <section 
+            key={`week-${weekIndex}`} 
+            className="week-section"
+            ref={el => { weekRefs.current[weekIndex] = el; }}
+          >
+            <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4">
+              Week {weekIndex + 1}
+            </h2>
+            {/* Rest of the section code */}
+            <div className="space-y-2 sm:space-y-4">
                 {/* Grid/List of Day Cards */}
                 <div className={`grid gap-1 sm:gap-4 auto-rows-min ${
                   viewMode === 'calendar' 
@@ -388,7 +386,7 @@ export default function WorkoutTracker() {
                     : 'grid-cols-1'
                 }`}>
                   {week.map((day, dayIndex) => {
-                    const workoutId = createWorkoutId(weekIndex, dayIndex, day.date);
+                    const workoutId = createWorkoutId(weekIndex, dayIndex);
                     const isExpanded = expandedWorkoutId === workoutId;
                     
                     // Get workout program to check total exercises
@@ -492,9 +490,8 @@ export default function WorkoutTracker() {
                   )}
                 </div>
               </div>
-            </section>
-          );
-        })}
+          </section>
+        ))}
       </div>
 
       {/* Footer Information */}
