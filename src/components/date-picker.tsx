@@ -75,20 +75,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
       {isExpanded && (
         <div className="space-y-2 mt-4">
           <div className="flex gap-3">
-            <div className="flex-1 relative">
+            <div className="flex-1">
               <input
                 type="date"
                 id="start-date"
                 value={formatDateForInput(tempDate)}
                 onChange={handleDateChange}
-                className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <div 
-                className="absolute inset-0 cursor-pointer"
-                onClick={() => {
-                  const input = document.getElementById('start-date') as HTMLInputElement;
-                  input?.showPicker();
+                className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if ('showPicker' in HTMLInputElement.prototype) {
+                    (e.target as HTMLInputElement).showPicker();
+                  }
                 }}
               />
             </div>
