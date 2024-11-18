@@ -1,0 +1,74 @@
+{
+  "name": "Catcher Velocity Tracker",
+  "version": "1.0.0",
+  "description": "A workout tracking application for baseball catcher velocity training",
+  "type": "application",
+  "dependencies": {
+    "required": [
+      {
+        "name": "Node.js",
+        "version": ">=18.0.0"
+      },
+      {
+        "name": "React",
+        "version": ">=18.0.0"
+      }
+    ],
+    "optional": []
+  },
+  "project_root": "/Users/cdolan/Projects/catcher-velo-tracker",
+  "structure": {
+    "src": {
+      "description": "Source code directory",
+      "children": {
+        "components": {
+          "description": "React components",
+          "children": {
+            "exercise-row.tsx": "Exercise row component for displaying individual exercises",
+            "velo-tracker.tsx": "Main velocity tracking component"
+          }
+        },
+        "data": {
+          "description": "Data and configuration files",
+          "children": {
+            "programs": {
+              "description": "Workout program definitions",
+              "children": {
+                "catcher-velo-program.json": "Main velocity program configuration"
+              }
+            },
+            "exercises.ts": "Exercise definitions and configurations",
+            "programs.ts": "Program configurations and mappings",
+            "types.ts": "TypeScript type definitions",
+            "workouts.ts": "Workout type definitions"
+          }
+        },
+        "utils": {
+          "description": "Utility functions and helpers",
+          "children": {
+            "common.ts": "Common utility functions",
+            "program-loader.ts": "Program loading utilities",
+            "program-utils.ts": "Program-specific utility functions"
+          }
+        }
+      }
+    },
+    "public": {
+      "description": "Public assets directory",
+      "children": {}
+    }
+  },
+  "metadata": {
+    "created": "2024-01-19",
+    "author": "Chris Dolan",
+    "license": "MIT",
+    "tags": [
+      "workout",
+      "baseball",
+      "velocity",
+      "tracking",
+      "react",
+      "typescript"
+    ]
+  }
+}
