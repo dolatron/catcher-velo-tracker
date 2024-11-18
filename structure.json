@@ -16,7 +16,7 @@
     ],
     "optional": []
   },
-  "project_root": "/Users/cdolan/Projects/catcher-velo-tracker",
+  "project_root": "/catcher-velo-tracker",
   "structure": {
     "src": {
       "description": "Source code directory",
