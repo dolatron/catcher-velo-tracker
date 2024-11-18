@@ -9,7 +9,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
-import { ExerciseRow } from '@/components/excercise-row';
+import { ExerciseRow } from '@/components/exercise-row';
 import type { Exercise, WorkoutProgram } from '@/data/types';
 import { workoutTypes } from '@/data/workouts';
 
