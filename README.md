@@ -33,10 +33,19 @@ npm run dev
 
 ```
 src/
-├── components/    # React components
-├── data/          # Data models and constants
-├── app/           # Global app framework and styles
-└── lib/         # Utility functions
+├── components/          # React components
+│   ├── exercise-row.tsx
+│   └── velo-tracker.tsx
+├── data/               # Data and configuration files
+│   ├── programs/
+│   ├── exercises.ts
+│   ├── programs.ts
+│   ├── types.ts
+│   └── workouts.ts
+└── utils/              # Utility functions
+    ├── common.ts
+    ├── program-loader.ts
+    └── program-utils.ts
 ```
 
 
