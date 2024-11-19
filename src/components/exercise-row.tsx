@@ -1,9 +1,13 @@
-// exercise-row.tsx
 /**
- * ExerciseRow Component
- * Renders a single exercise within a workout, displaying exercise details,
- * completion status, and optional video demonstration link.
- * Each row is interactive, allowing users to mark exercises as complete.
+ * Exercise Row Component
+ * 
+ * Renders an individual exercise item within a workout section.
+ * Handles displaying exercise details, completion state, and video links.
+ * Features:
+ * - Interactive checkbox for completion tracking
+ * - Dynamic styling based on completion state
+ * - Optional video demonstration links
+ * - Responsive layout for mobile and desktop
  */
 
 import React from 'react';
@@ -13,6 +17,9 @@ import { ExternalLink } from 'lucide-react';
 import type { Exercise } from '@/common/types';
 
 // Type Definitions
+/**
+ * Props for the ExerciseRow component
+ */
 interface ExerciseRowProps {
   exercise: Exercise;
   completed: boolean;
@@ -21,6 +28,10 @@ interface ExerciseRowProps {
 }
 
 // Base styles for consistent component styling
+/**
+ * Style configurations for consistent component appearance
+ * Separated by functional area for better organization
+ */
 const BASE_STYLES = {
   container: "flex items-start gap-2 sm:gap-3 p-2 rounded-lg hover:bg-gray-50/50 transition-colors",
   label: "flex-grow cursor-pointer select-none",
@@ -56,11 +67,11 @@ const BASE_STYLES = {
  */
 
 /**
- * Combines base style with completion-dependent styles
- * @param baseStyle Base style class
- * @param completed Whether the exercise is completed
- * @param styles Object containing completed and active style variants
- * @returns Combined style classes
+ * Combines style classes based on completion state
+ * 
+ * @param baseStyle - Base CSS classes
+ * @param completed - Current completion state
+ * @param styles - Style variants for completed/active states
  */
 const getTextStyles = (
   baseStyle: string,
@@ -72,6 +83,7 @@ const getTextStyles = (
 
 /**
  * ExerciseRow Component
+ * Displays a single exercise with its details and completion state
  */
 export const ExerciseRow: React.FC<ExerciseRowProps> = ({ 
   exercise,
@@ -79,15 +91,15 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
   onComplete,
   id 
 }) => {
-  // Get actual values, preferring specific over defaults
+  // Extract exercise properties with fallbacks
   const sets = exercise.sets || exercise.defaultSets;
   const reps = exercise.reps || exercise.defaultReps;
   const rpe = exercise.rpe || exercise.defaultRpe;
   const notes = exercise.notes || exercise.defaultNotes;
-  const name = exercise.name || exercise.id; // Fallback to id if no name
+  const name = exercise.name || exercise.id;
 
   /**
-   * Renders the sets and reps information
+   * Render functions for exercise details
    */
   const renderSetsAndReps = () => {
     if (!reps) return null;
@@ -103,9 +115,6 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
     );
   };
 
-  /**
-   * Renders the RPE (Rate of Perceived Exertion) target if specified
-   */
   const renderRPE = () => {
     if (!rpe) return null;
 
@@ -116,9 +125,6 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
     );
   };
 
-  /**
-   * Renders additional notes or instructions for the exercise
-   */
   const renderNotes = () => {
     if (!notes) return null;
 

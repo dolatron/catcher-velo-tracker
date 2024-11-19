@@ -1,72 +1,45 @@
-// workout-detail-card.tsx
 /**
  * WorkoutDetailCard Component
- * Displays the detailed view of a workout when selected from the calendar.
- * Shows all exercises grouped by section (warm-up, throwing, recovery)
- * and allows tracking completion of individual exercises.
+ * 
+ * Displays detailed workout information when a day is selected.
+ * Features:
+ * - Exercise sections with completion tracking
+ * - User notes input
+ * - Batch completion controls
+ * - Workout metadata display (RPE, notes)
+ * - Responsive layout for calendar and list views
  */
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
 import { ExerciseRow } from '@/components/exercise-row';
-import type { Exercise, WorkoutProgram, WorkoutType } from '@/common/types';
+import type { 
+  WorkoutSectionProps, 
+  WorkoutDetailCardProps 
+} from '@/common/types';
 import { getBaseWorkout } from '@/common/utils';
 
-// Constants
+/**
+ * Format configuration for workout date display
+ */
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',    // e.g., "Monday"
-  month: 'long',      // e.g., "January"
-  day: 'numeric'      // e.g., "15"
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric'
 } as const;
 
-// Type Definitions
-interface WorkoutSectionProps {
-  title: string;                          // Section title (e.g., "Warm-up", "Throwing", "Recovery")
-  exercises?: Exercise[];                 // List of exercises in this section
-  completed: Record<string, boolean>;     // Completion status for each exercise
-  onComplete: (id: string) => void;       // Callback when exercise completion status changes
-  weekIndex: number;                      // Week number (1-8)
-  dayIndex: number;                       // Day number (1-7)
-}
-
-// Remove workoutType from props since we no longer use variations
-interface WorkoutDetailCardProps {
-  day: {
-    workout: string;                      // Workout name (e.g., "Hybrid B")
-    date: Date;                           // Date of the workout
-    completed: Record<string, boolean>;   // Completion status of exercises
-  };
-  details: WorkoutProgram;                // Full workout program details
-  onComplete: (id: string) => void;       // Exercise completion callback
-  onClose: () => void;                    // Close detail view callback
-  weekIndex: number;                      // Week number (1-8)
-  dayIndex: number;                       // Day number (1-7)
-  onBatchComplete: (exerciseIds: string[], completed: boolean) => void;  // Add new prop
-  onScroll?: () => void;  // Add new prop for scroll handling
-  viewMode?: 'calendar' | 'list';  // Add new prop for view mode
-  workoutTypes: Record<string, WorkoutType>;  // Add this prop
-}
-
 /**
- * Helper Functions
- */
-
-/**
- * Generates a unique section identifier
- * @param weekIndex Week number
- * @param dayIndex Day number
- * @param title Section title
- * @returns Unique section identifier
+ * Generates unique identifier for exercise sections
+ * Used to track completion state
  */
 const getSectionId = (weekIndex: number, dayIndex: number, title: string): string => 
   `week${weekIndex}-day${dayIndex}-${title.toLowerCase()}`;
 
 /**
  * WorkoutSection Component
- * Renders a section of exercises (e.g., Warm-up, Throwing, Recovery)
+ * Renders a group of exercises with completion tracking
  */
-// Simplified WorkoutSection component without workoutType prop
 const WorkoutSection: React.FC<WorkoutSectionProps> = ({ 
   title, 
   exercises = [], 
@@ -112,7 +85,7 @@ const WorkoutSection: React.FC<WorkoutSectionProps> = ({
 
 /**
  * WorkoutDetailCard Component
- * Main component for displaying detailed workout information
+ * Main container for workout details and exercise tracking
  */
 export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({ 
   day, 
@@ -124,22 +97,23 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   dayIndex,
   onScroll,
   viewMode = 'calendar',
-  workoutTypes  // Add this prop
+  workoutTypes,
+  onNotesChange
 }) => {
-  // Get workout type information
+  // Get workout configuration
   const baseWorkout = getBaseWorkout(day.workout);
   const workoutInfo = workoutTypes[baseWorkout];
 
-  // Define sections based on workout type
+  // Configure sections based on workout type
   const workoutSections = baseWorkout === 'Off' 
-    ? [{ title: "Recovery", exercises: details.recovery }]  // Rest days only show recovery
+    ? [{ title: "Recovery", exercises: details.recovery }]
     : [
-        { title: "Warm-up", exercises: details.warmup },    // Normal days show all sections
+        { title: "Warm-up", exercises: details.warmup },
         { title: "Throwing", exercises: details.throwing },
         { title: "Recovery", exercises: details.recovery }
-      ].filter(section => section.exercises?.length > 0); // Only show sections with exercises
+      ].filter(section => section.exercises?.length > 0);
 
-  // Get all exercise IDs for batch operations
+  // Prepare exercise IDs for batch operations
   const allExerciseIds = workoutSections.flatMap(section => 
     (section.exercises || []).map(exercise => 
       `${getSectionId(weekIndex, dayIndex, section.title)}-${exercise.id}`
@@ -206,10 +180,27 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
         </div>
       )}
 
+      {/* Add Notes Section before Action Buttons */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <label htmlFor="workout-notes" className="block text-sm font-medium text-gray-700 mb-2">
+          Workout Notes
+        </label>
+        <textarea
+          id="workout-notes"
+          rows={3}
+          className="block w-full rounded-md border border-gray-300 p-2 text-sm 
+                     focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Add any notes about this workout..."
+          value={day.userNotes ?? ''}
+          onChange={(e) => onNotesChange?.(e.target.value)}
+        />
+      </div>
+
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
         <button
           onClick={() => {
+            onNotesChange(''); // Clear notes
             onBatchComplete(allExerciseIds, false);
             onScroll?.(); // Scroll but don't close
           }}

@@ -1,3 +1,14 @@
+/**
+ * DatePicker Component
+ * 
+ * Handles program start date selection and displays overall progress.
+ * Provides options to:
+ * - Select a new start date
+ * - View program completion dates
+ * - Start over with today's date
+ * - View current progress statistics
+ */
+
 'use client';
 
 import React, { useState } from 'react';
@@ -6,22 +17,37 @@ import { Card } from '@/components/ui/card';
 import { ConfirmModal } from './ui/confirm-modal';
 import { normalizeDate, formatDateForDisplay, formatDateForInput, calculateEndDate } from '@/common/utils';
 
+/**
+ * Props for the DatePicker component
+ * @property selectedDate - Current program start date
+ * @property onDateChange - Callback when date is changed
+ * @property progress - Current program completion statistics
+ */
 interface DatePickerProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   progress: {
-    percentage: number;
-    completed: number;
-    total: number;
+    percentage: number;    // Overall completion percentage
+    completed: number;     // Number of completed days
+    total: number;        // Total number of program days
   };
 }
 
+/**
+ * DatePicker Component
+ * Manages program start date and displays progress information
+ */
 export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChange, progress }) => {
+  // Local state for date picker UI
   const [isExpanded, setIsExpanded] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(() => normalizeDate(selectedDate));
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showStartOverModal, setShowStartOverModal] = useState(false);
 
+  /**
+   * Handles date input change
+   * Converts input value to normalized date
+   */
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Create date from input value and adjust for timezone
     const [year, month, day] = event.target.value.split('-').map(Number);
@@ -29,6 +55,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
     setTempDate(normalizeDate(localDate));
   };
 
+  /**
+   * Validates and initiates date change confirmation
+   */
   const handleApplyDate = () => {
     if (tempDate.getTime() !== selectedDate.getTime()) {
       setShowConfirmModal(true);
@@ -37,11 +66,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
     }
   };
 
+  /**
+   * Confirms and applies the new date selection
+   */
   const handleConfirmDateChange = () => {
     onDateChange(normalizeDate(tempDate));
     setIsExpanded(false);
   };
 
+  /**
+   * Resets program to start from today
+   */
   const handleStartOver = () => {
     const today = normalizeDate(new Date());
     setTempDate(today);

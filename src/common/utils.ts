@@ -1,10 +1,25 @@
 /**
- * Common utility functions used across the application
+ * Utility functions for date manipulation and workout data processing.
+ * 
+ * This module provides core functionality for:
+ * - Date normalization and formatting
+ * - Workout name processing
+ * - Program schedule calculations
+ * 
+ * @module utils
  */
 
 /**
- * Normalizes a date to start of day in local timezone
- * This ensures consistent date handling across the app
+ * Normalizes a date by setting the time to midnight (00:00:00.000).
+ * Used for consistent date comparisons throughout the application.
+ * 
+ * @param {Date} date - The date to normalize
+ * @returns {Date} A new Date object set to midnight local time
+ * 
+ * @example
+ * const date = new Date('2023-12-25T14:30:00');
+ * const normalized = normalizeDate(date);
+ * // normalized = 2023-12-25T00:00:00.000
  */
 export const normalizeDate = (date: Date): Date => {
   const normalized = new Date(date);
@@ -13,7 +28,15 @@ export const normalizeDate = (date: Date): Date => {
 };
 
 /**
- * Extracts base workout name by removing variations and asterisks
+ * Extracts the base workout name from a potentially complex workout string.
+ * Handles workout variations marked with "OR" and special markers (*).
+ * 
+ * @param {string} workout - Raw workout name (e.g., "Workout A OR Workout B*")
+ * @returns {string} Simplified base workout name
+ * 
+ * @example
+ * const name = getBaseWorkout("Speed A OR Recovery A*");
+ * // name = "Speed A"
  */
 export const getBaseWorkout = (workout: string): string => {
   const base = workout.split(' OR ')[0].trim().replace('*', '');
@@ -22,13 +45,31 @@ export const getBaseWorkout = (workout: string): string => {
 };
 
 /**
- * Formats a date using specified options
+ * Formats a date using the specified Intl.DateTimeFormat options.
+ * Provides localized date formatting with configurable output format.
+ * 
+ * @param {Date} date - The date to format
+ * @param {Intl.DateTimeFormatOptions} options - Formatting options
+ * @returns {string} Formatted date string according to locale and options
+ * 
+ * @example
+ * const date = new Date('2023-12-25');
+ * const formatted = formatDate(date, { weekday: 'long', month: 'short' });
+ * // formatted = "Monday, Dec"
  */
 export const formatDate = (date: Date, options: Intl.DateTimeFormatOptions): string => 
   date.toLocaleDateString('en-US', options);
 
 /**
- * Formats a date for display in MM/DD/YYYY format
+ * Formats a date in MM/DD/YYYY format for display in the UI.
+ * 
+ * @param {Date} date - The date to format
+ * @returns {string} Date formatted as MM/DD/YYYY
+ * 
+ * @example
+ * const date = new Date('2023-12-25');
+ * const display = formatDateForDisplay(date);
+ * // display = "12/25/2023"
  */
 export const formatDateForDisplay = (date: Date): string => {
   return date.toLocaleDateString('en-US', {
@@ -39,7 +80,15 @@ export const formatDateForDisplay = (date: Date): string => {
 };
 
 /**
- * Formats a date for input field in YYYY-MM-DD format
+ * Formats a date in YYYY-MM-DD format for HTML date input fields.
+ * 
+ * @param {Date} date - The date to format
+ * @returns {string} Date formatted as YYYY-MM-DD
+ * 
+ * @example
+ * const date = new Date('2023-12-25');
+ * const input = formatDateForInput(date);
+ * // input = "2023-12-25"
  */
 export const formatDateForInput = (date: Date): string => {
   const year = date.getFullYear();
@@ -49,10 +98,19 @@ export const formatDateForInput = (date: Date): string => {
 };
 
 /**
- * Calculates the estimated completion date (8 weeks from start)
+ * Calculates the program end date based on a start date.
+ * Program duration is fixed at 8 weeks (56 days) minus 1 day.
+ * 
+ * @param {Date} startDate - Program start date
+ * @returns {Date} Calculated program end date
+ * 
+ * @example
+ * const start = new Date('2023-12-25');
+ * const end = calculateEndDate(start);
+ * // end = 2024-02-18 (55 days after start)
  */
 export const calculateEndDate = (startDate: Date): Date => {
   const endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + (8 * 7) - 1); // 8 weeks minus 1 day
+  endDate.setDate(startDate.getDate() + (8 * 7) - 1);
   return endDate;
 };

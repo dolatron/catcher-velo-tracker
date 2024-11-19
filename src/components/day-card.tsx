@@ -1,37 +1,50 @@
-// day-card.tsx
 /**
  * DayCard Component
- * Displays a single day's workout information in a card format.
- * Used in the weekly schedule grid to show workout type and date.
+ * 
+ * Displays a single day's workout information in a clickable card format.
+ * Features:
+ * - Responsive layout for calendar and list views
+ * - Visual indicators for completion status
+ * - Progress percentage display
+ * - Interactive state handling
+ * - Accessibility support
  */
 
 import React, { useMemo, forwardRef } from 'react';
 import { Card } from '@/components/ui/card';
+import { StickyNote } from 'lucide-react'; // Add this import
 import type { WorkoutType } from '@/common/types';
 import { getBaseWorkout, formatDate } from '@/common/utils';
 
-// Type Definitions
+/**
+ * Props for the DayCard component
+ */
 interface DayCardProps {
-  workout: string;         // Name of the workout (e.g., "Hybrid B", "Recovery")
-  date: Date;             // Date of the workout
-  isExpanded: boolean;    // Whether this card is currently selected/expanded
-  onClick: () => void;    // Handler for when card is clicked
-  ref?: React.RefObject<HTMLDivElement>; // Add ref to props
-  completed: boolean;    // Whether all exercises are completed
-  inProgress?: boolean;  // Add new prop
-  completionPercentage?: number;  // Add new prop
+  workout: string;              // Workout identifier
+  date: Date;                   // Scheduled date
+  isExpanded: boolean;          // Current expansion state
+  onClick: () => void;          // Click handler
+  ref?: React.RefObject<HTMLDivElement>;
+  completed: boolean;           // Full completion status
+  inProgress?: boolean;         // Partial completion status
+  completionPercentage?: number;// Progress indicator
   viewMode?: 'calendar' | 'list';
-  workoutTypes: Record<string, WorkoutType>;  // Add this prop
+  workoutTypes: Record<string, WorkoutType>;
+  userNotes?: string;  // Add this prop
 }
 
-// Date formatting options for different parts of the date display
+/**
+ * Date formatting options for different display contexts
+ */
 const DATE_FORMAT_OPTIONS = {
   WEEKDAY: { weekday: 'short' } as const,    // e.g., "Mon"
   DAY: { day: 'numeric' } as const,          // e.g., "15"
   MONTH: { month: 'short' } as const         // e.g., "Jan"
 } as const;
 
-// Base style definitions for consistent styling across the component
+/**
+ * Style configurations for component appearance
+ */
 const BASE_STYLES = {
   card: {
     default: "cursor-pointer transition-colors duration-200 w-full", // Remove fixed height
@@ -59,15 +72,19 @@ const BASE_STYLES = {
   },
   percentage: (viewMode: 'calendar' | 'list') => viewMode === 'calendar'
     ? "absolute top-1 right-1 sm:top-2 sm:right-2 text-[9px] sm:text-xs font-medium rounded-full bg-black/10 px-1 sm:px-1.5 py-0.5"
-    : "absolute top-2 right-2 text-xs font-medium rounded-full bg-black/10 px-1.5 py-0.5"
+    : "absolute top-2 right-2 text-xs font-medium rounded-full bg-black/10 px-1.5 py-0.5",
+  notes: {
+    icon: "absolute bottom-1 right-1 sm:bottom-2 sm:right-2 text-gray-400 w-3 h-3 sm:w-4 sm:h-4"
+  }
 } as const;
 
 /**
- * Helper Functions
+ * Gets workout information from available workout types
+ * Provides fallback for unknown workout types
+ * 
+ * @param workout - Workout identifier
+ * @param workoutTypes - Available workout configurations
  */
-
-// Gets workout information from the workoutTypes mapping
-// Returns default values if workout type not found
 const getWorkoutInfo = (workout: string, workoutTypes: Record<string, WorkoutType>): WorkoutType => {
   const baseWorkout = getBaseWorkout(workout);
   const workoutType = workoutTypes[baseWorkout];
@@ -87,7 +104,7 @@ const getWorkoutInfo = (workout: string, workoutTypes: Record<string, WorkoutTyp
 
 /**
  * DayCard Component
- * Displays a card showing a single day's workout information
+ * Displays workout information in an interactive card format
  */
 export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   workout,
@@ -98,9 +115,10 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   completed,
   inProgress,
   completionPercentage,
-  viewMode = 'calendar'
+  viewMode = 'calendar',
+  userNotes,
 }, ref) => {
-  // Memoized values to prevent unnecessary recalculations
+  // Memoized computations
   const workoutInfo = useMemo(() => getWorkoutInfo(workout, workoutTypes), [workout, workoutTypes]);
   
   // Format date parts once and reuse
@@ -110,7 +128,7 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
     month: formatDate(date, DATE_FORMAT_OPTIONS.MONTH)
   }), [date]);
 
-  // Compute classes for card styling, including conditional expanded state
+  // Dynamic class computation
   const cardClasses = useMemo(() => {
     const classes = [];
     
@@ -183,14 +201,20 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
           </div>
         )}
       </div>
+      {/* Add Note Indicator */}
+      {userNotes && (
+        <StickyNote className={BASE_STYLES.notes.icon} />
+      )}
     </Card>
   );
 });
 
 DayCard.displayName = 'DayCard';
 
-// Memoize the entire component to prevent unnecessary rerenders
-// Only rerender if workout, date, or expanded state changes
+/**
+ * Memoized export to prevent unnecessary rerenders
+ * Only updates on workout, date, or expansion state changes
+ */
 export default React.memo(DayCard, (prevProps, nextProps) => {
   return prevProps.workout === nextProps.workout &&
     prevProps.date.getTime() === nextProps.date.getTime() &&

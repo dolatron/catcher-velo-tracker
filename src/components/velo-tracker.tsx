@@ -1,4 +1,3 @@
-// velo-tracker.tsx
 /**
  * WorkoutTracker Component
  * 
@@ -389,6 +388,26 @@ export default function WorkoutTracker() {
       }
     }, 100);
   }, []);
+
+  /**
+   * Handle notes update for a specific workout
+   */
+  const handleNotesUpdate = useCallback((weekIndex: number, dayIndex: number, notes: string) => {
+    setSchedule(prev => 
+      prev.map((week, wIndex) => 
+        week.map((day, dIndex) => {
+          if (wIndex === weekIndex && dIndex === dayIndex) {
+            return {
+              ...day,
+              userNotes: notes
+            };
+          }
+          return day;
+        })
+      )
+    );
+  }, [setSchedule]);
+
   return (
     <div className="max-w-6xl mx-auto p-2 sm:p-6">
       <h1 className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-center">
@@ -493,6 +512,7 @@ export default function WorkoutTracker() {
                           }}
                           viewMode={viewMode}
                           workoutTypes={programConfig.programData.workoutTypes}
+                          userNotes={day.userNotes}
                         />
                         {/* Render detail card immediately after day card in list view */}
                         {isExpanded && viewMode === 'list' && (
@@ -511,6 +531,10 @@ export default function WorkoutTracker() {
                             onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
                             viewMode={viewMode}
                             workoutTypes={programConfig.programData.workoutTypes}
+                            onNotesChange={(notes) => {
+                              const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                              handleNotesUpdate(weekIndex, dayIndex, notes);
+                            }}
                           />
                         )}
                       </div>
@@ -543,6 +567,10 @@ export default function WorkoutTracker() {
                         }}
                         viewMode={viewMode}
                         workoutTypes={programConfig.programData.workoutTypes}
+                        onNotesChange={(notes) => {
+                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                          handleNotesUpdate(weekIndex, dayIndex, notes);
+                        }}
                       />
                     </div>
                   )}
