@@ -177,24 +177,27 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
               dayIndex={dayIndex}
             />
           ))}
+          
+          {/* Notes Section - Added to the same divided container */}
+          <div className="rounded-lg p-3 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-indigo-900">
+                Notes
+              </h3>
+            </div>
+
+            <textarea
+              id="workout-notes"
+              rows={3}
+              className="block w-full rounded-md border border-gray-300 p-2 text-sm 
+                         focus:border-indigo-500 focus:ring-indigo-500"
+              placeholder="Add any notes about this workout..."
+              value={day.userNotes ?? ''}
+              onChange={(e) => onNotesChange?.(e.target.value)}
+            />
+          </div>
         </div>
       )}
-
-      {/* Add Notes Section before Action Buttons */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <label htmlFor="workout-notes" className="block text-sm font-medium text-gray-700 mb-2">
-          Workout Notes
-        </label>
-        <textarea
-          id="workout-notes"
-          rows={3}
-          className="block w-full rounded-md border border-gray-300 p-2 text-sm 
-                     focus:border-indigo-500 focus:ring-indigo-500"
-          placeholder="Add any notes about this workout..."
-          value={day.userNotes ?? ''}
-          onChange={(e) => onNotesChange?.(e.target.value)}
-        />
-      </div>
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
