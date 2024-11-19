@@ -14,66 +14,46 @@ import type { Exercise } from '@/data/types';
 
 // Type Definitions
 interface ExerciseRowProps {
-  exercise: Exercise;         // The exercise data to display
-  completed: boolean;         // Whether the exercise has been completed
-  onComplete: () => void;     // Callback when exercise is marked complete/incomplete
-  id: string;                 // Unique identifier for the exercise
-  workoutType?: string;       // Optional type of workout (affects exercise variations)
-}
-
-// Extended exercise type that includes computed display properties
-interface DisplayExercise extends Exercise {
-  sets?: number;              // Number of sets to perform
-  reps: string;              // Repetition scheme (e.g., "3x10" or "30 seconds")
-  rpe?: string;              // Rate of Perceived Exertion target
-  notes?: string;            // Additional instructions or tips
+  exercise: Exercise;
+  completed: boolean;
+  onComplete: () => void;
+  id: string;
 }
 
 // Base styles for consistent component styling
 const BASE_STYLES = {
-  container: "flex items-start gap-2 sm:gap-3 p-2 rounded-lg hover:bg-gray-50 group",
-  label: "flex-grow cursor-pointer select-none text-base",
+  container: "flex items-start gap-2 sm:gap-3 p-2 rounded-lg hover:bg-gray-50/50 transition-colors",
+  label: "flex-grow cursor-pointer select-none",
   exerciseName: {
-    base: "font-medium",
-    completed: "line-through text-gray-500",
+    base: "font-medium text-base",
+    completed: "text-gray-400 line-through",
     active: "text-gray-900"
   },
-  metaContainer: "flex flex-wrap gap-2 text-sm text-muted-foreground",
+  metaContainer: "flex flex-wrap gap-2 text-sm",
   metaText: {
     completed: "text-gray-400",
-    active: ""
+    active: "text-gray-600"
   },
   rpeText: {
     completed: "text-gray-400",
-    active: "text-indigo-600"
+    active: "text-indigo-600 font-medium"
   },
   notes: {
     completed: "text-gray-400",
     active: "text-gray-500"
   },
+  checkbox: `h-5 w-5 mt-0.5 
+    rounded
+    border border-gray-900 
+    transition-colors 
+    focus-visible:outline-none 
+    focus-visible:ring-0`,
   videoLink: "text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded-full transition-colors shrink-0"
 } as const;
 
 /**
  * Helper Functions
  */
-
-/**
- * Gets exercise details including any workout-specific variations
- * @param exercise Base exercise data
- * @param workoutType Optional workout type to get variations for
- * @returns Combined exercise data with any variation-specific overrides
- */
-const getExerciseDetails = (
-  exercise: Exercise, 
-  workoutType?: string
-): DisplayExercise => {
-  const variation = workoutType && exercise.variations?.[workoutType];
-  return {
-    ...exercise,
-    ...(variation || {})
-  };
-};
 
 /**
  * Combines base style with completion-dependent styles
@@ -94,25 +74,27 @@ const getTextStyles = (
  * ExerciseRow Component
  */
 export const ExerciseRow: React.FC<ExerciseRowProps> = ({ 
-  exercise, 
-  completed, 
-  onComplete, 
-  id,
-  workoutType 
+  exercise,
+  completed,
+  onComplete,
+  id 
 }) => {
-  // Get exercise details including any workout-specific variations
-  const displayExercise = getExerciseDetails(exercise, workoutType);
+  // Get actual values, preferring specific over defaults
+  const sets = exercise.sets || exercise.defaultSets;
+  const reps = exercise.reps || exercise.defaultReps;
+  const rpe = exercise.rpe || exercise.defaultRpe;
+  const notes = exercise.notes || exercise.defaultNotes;
+  const name = exercise.name || exercise.id; // Fallback to id if no name
 
   /**
    * Renders the sets and reps information
-   * Format examples: "3x10" or "30-60 seconds"
    */
   const renderSetsAndReps = () => {
-    if (!displayExercise.reps) return null;
+    if (!reps) return null;
 
-    const text = displayExercise.sets !== undefined
-      ? `${displayExercise.sets}x${displayExercise.reps}`
-      : displayExercise.reps;
+    const text = sets !== undefined
+      ? `${sets}x${reps}`
+      : reps;
 
     return (
       <span className={getTextStyles('', completed, BASE_STYLES.metaText)}>
@@ -125,11 +107,11 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
    * Renders the RPE (Rate of Perceived Exertion) target if specified
    */
   const renderRPE = () => {
-    if (!displayExercise.rpe) return null;
+    if (!rpe) return null;
 
     return (
       <span className={getTextStyles('', completed, BASE_STYLES.rpeText)}>
-        @{displayExercise.rpe}
+        @{rpe}
       </span>
     );
   };
@@ -138,11 +120,11 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
    * Renders additional notes or instructions for the exercise
    */
   const renderNotes = () => {
-    if (!displayExercise.notes) return null;
+    if (!notes) return null;
 
     return (
       <div className={getTextStyles('text-xs', completed, BASE_STYLES.notes)}>
-        {displayExercise.notes}
+        {notes}
       </div>
     );
   };
@@ -162,7 +144,7 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
           id={id}
           checked={completed}
           onCheckedChange={onComplete}
-          className="mt-1"
+          className={BASE_STYLES.checkbox}
         />
   
         {/* Exercise details section
@@ -175,7 +157,7 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
           <div className="space-y-1">
             {/* Exercise name with conditional styling based on completion status */}
             <div className={getTextStyles(BASE_STYLES.exerciseName.base, completed, BASE_STYLES.exerciseName)}>
-              {displayExercise.name}
+              {name}
             </div>
   
             {/* Exercise metadata (sets, reps, RPE) container */}
@@ -193,14 +175,14 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({
       {/* Optional video demonstration link
           Rendered only when videoUrl is available
           stopPropagation prevents row click when clicking link */}
-      {displayExercise.videoUrl && (
+      {exercise.videoUrl && (
         <a
-          href={displayExercise.videoUrl}
+          href={exercise.videoUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={BASE_STYLES.videoLink}
           onClick={(e) => e.stopPropagation()}
-          aria-label={`Watch video demonstration for ${displayExercise.name}`}
+          aria-label={`Watch video demonstration for ${exercise.name}`}
         >
           <ExternalLink className="w-4 h-4" />
         </a>

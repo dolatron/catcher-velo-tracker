@@ -15,8 +15,11 @@ export const normalizeDate = (date: Date): Date => {
 /**
  * Extracts base workout name by removing variations and asterisks
  */
-export const getBaseWorkout = (workout: string): string => 
-  workout.split(' OR ')[0].replace('*', '');
+export const getBaseWorkout = (workout: string): string => {
+  const base = workout.split(' OR ')[0].trim().replace('*', '');
+  console.log('getBaseWorkout:', { input: workout, output: base });
+  return base;
+};
 
 /**
  * Formats a date using specified options

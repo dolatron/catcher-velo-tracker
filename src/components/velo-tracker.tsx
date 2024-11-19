@@ -16,26 +16,21 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { workoutPrograms, generateSchedule } from '@/data/programs';
+// Remove generateSchedule import
 import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
-import type { DayWorkout, WorkoutProgram } from '@/data/types';
-import { normalizeDate } from '@/utils/common';
+import type { DayWorkout, WorkoutProgram, Program, Exercise } from '@/data/types';
+import { normalizeDate, getBaseWorkout } from '@/utils/common';
 import { LayoutGrid, LayoutList } from 'lucide-react';
+import { ProgramConfig, useProgram } from '@/contexts/program-context';
 
 // Constants
-const STORAGE_KEY = 'workout-tracker-state';
-const START_DATE_KEY = 'program-start-date';
-// Change this line to use today's date as default
-const PROGRAM_START_DATE = new Date();
+const PROGRAM_START_DATE = new Date(); // Define a default start date
 const ERROR_MESSAGES = {
   SAVE_FAILED: 'Failed to save schedule:',
   LOAD_FAILED: 'Failed to load saved schedule:',
 } as const;
-
-// Add new constant at the top with other constants
-const VIEW_MODE_KEY = 'workout-view-mode';
 
 // Type Definitions
 /**
@@ -65,23 +60,50 @@ type Schedule = DayWorkout[][];
 const createWorkoutId = (weekIndex: number, dayIndex: number): string => 
   `week${weekIndex}-day${dayIndex}`; // Remove date from ID, week and day indices are sufficient
 
+const getStorageKeys = (programId: string) => ({
+  SCHEDULE: `workout-tracker-state-${programId}`,
+  START_DATE: `program-start-date-${programId}`,
+  VIEW_MODE: `workout-view-mode-${programId}`,
+});
+
+const generateSchedule = (startDate: Date, program: Program): DayWorkout[][] => {
+  const normalizedStart = normalizeDate(startDate);
+  const schedule = program.schedule;
+  
+  if (!schedule || !schedule.weeks) {
+    throw new Error('Invalid program schedule data');
+  }
+
+  return schedule.weeks.map((week, weekIndex) => 
+    week.days.map((workout, dayIndex) => {
+      const date = new Date(normalizedStart);
+      date.setDate(normalizedStart.getDate() + (weekIndex * 7) + dayIndex);
+      
+      return {
+        date: normalizeDate(date),
+        workout,
+        completed: {} as Record<string, boolean>
+      };
+    })
+  );
+};
+
 /**
  * Custom Hook: usePersistedSchedule
  * 
  * Manages the workout schedule state and its persistence in localStorage.
  * Handles loading saved progress and saving updates.
  */
-const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<Schedule>>] => {
+const usePersistedSchedule = (program: Program, STORAGE_KEYS: ReturnType<typeof getStorageKeys>): [Schedule, React.Dispatch<React.SetStateAction<Schedule>>] => {
   const [schedule, setSchedule] = useState<Schedule>(() => {
-    // Don't try to access localStorage during SSR
     if (typeof window === 'undefined') {
-      return generateSchedule(PROGRAM_START_DATE);
+      return generateSchedule(PROGRAM_START_DATE, program);
     }
 
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEYS.SCHEDULE);
       if (!saved) {
-        return generateSchedule(PROGRAM_START_DATE);
+        return generateSchedule(PROGRAM_START_DATE, program);
       }
       
       // Parse saved schedule and convert date strings back to Date objects
@@ -95,18 +117,18 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
       );
     } catch (error) {
       console.error(ERROR_MESSAGES.LOAD_FAILED, error);
-      return generateSchedule(PROGRAM_START_DATE);
+      return generateSchedule(PROGRAM_START_DATE, program);
     }
   });
 
   // Save schedule to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule));
+      localStorage.setItem(STORAGE_KEYS.SCHEDULE, JSON.stringify(schedule));
     } catch (error) {
       console.error(ERROR_MESSAGES.SAVE_FAILED, error);
     }
-  }, [schedule]);
+  }, [schedule, STORAGE_KEYS.SCHEDULE]);
 
   return [schedule, setSchedule];
 };
@@ -116,12 +138,12 @@ const usePersistedSchedule = (): [Schedule, React.Dispatch<React.SetStateAction<
  * 
  * Manages the start date state and its persistence in localStorage.
  */
-const useStartDate = (): [Date, (date: Date) => void] => {
+const useStartDate = (STORAGE_KEYS: ReturnType<typeof getStorageKeys>): [Date, (date: Date) => void] => {
   const [startDate, setStartDate] = useState<Date>(() => {
     if (typeof window === 'undefined') return normalizeDate(PROGRAM_START_DATE);
     
     try {
-      const saved = localStorage.getItem(START_DATE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEYS.START_DATE);
       return saved ? normalizeDate(new Date(saved)) : normalizeDate(PROGRAM_START_DATE);
     } catch {
       return normalizeDate(PROGRAM_START_DATE);
@@ -130,21 +152,58 @@ const useStartDate = (): [Date, (date: Date) => void] => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(START_DATE_KEY, startDate.toISOString());
+      localStorage.setItem(STORAGE_KEYS.START_DATE, startDate.toISOString());
     } catch (error) {
       console.error('Failed to save start date:', error);
     }
-  }, [startDate]);
+  }, [startDate, STORAGE_KEYS.START_DATE]);
 
   return [startDate, setStartDate];
+};
+
+/**
+ * Get workout program details from the program data
+ */
+const getWorkoutProgram = (workout: string, programConfig: ProgramConfig): WorkoutProgram | undefined => {
+  const baseWorkout = getBaseWorkout(workout);
+  const workoutType = programConfig.programData.workoutTypes[baseWorkout];
+  
+  if (!workoutType) return undefined;
+
+  // Helper to merge exercise defaults with workout-specific values
+  const mergeExerciseWithDefaults = (exercise: Exercise): Exercise => {
+    const baseExercise = programConfig.exerciseData.exercises[exercise.id];
+    if (!baseExercise) return exercise;
+
+    return {
+      ...baseExercise,           // Base exercise contains all default values
+      ...exercise,               // Workout-specific overrides
+    };
+  };
+
+  // Map sections to their proper categories and include exercise defaults
+  const workoutProgram: WorkoutProgram = {
+    warmup: workoutType.sections.find(s => s.name.toLowerCase() === 'warmup')
+      ?.exercises.map(mergeExerciseWithDefaults) || [],
+    throwing: workoutType.sections.find(s => s.name.toLowerCase() === 'throwing')
+      ?.exercises.map(mergeExerciseWithDefaults) || [],
+    recovery: workoutType.sections.find(s => s.name.toLowerCase() === 'recovery')
+      ?.exercises.map(mergeExerciseWithDefaults) || [],
+    rpeRange: workoutType.rpeRange,
+    notes: workoutType.notes
+  };
+
+  return workoutProgram;
 };
 
 /**
  * Main WorkoutTracker Component
  */
 export default function WorkoutTracker() {
-  const [startDate, setStartDate] = useStartDate();
-  const [schedule, setSchedule] = usePersistedSchedule();
+  const programConfig = useProgram();
+  const STORAGE_KEYS = getStorageKeys(programConfig.programData.id);
+  const [startDate, setStartDate] = useStartDate(STORAGE_KEYS);
+  const [schedule, setSchedule] = usePersistedSchedule(programConfig.programData, STORAGE_KEYS);
   const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
   const weekRefs = useRef<(HTMLElement | null)[]>([]);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -152,25 +211,24 @@ export default function WorkoutTracker() {
   // Initialize viewMode from localStorage
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>(() => {
     if (typeof window === 'undefined') return 'calendar';
-    return (localStorage.getItem(VIEW_MODE_KEY) as 'calendar' | 'list') || 'calendar';
+    return (localStorage.getItem(STORAGE_KEYS.VIEW_MODE) as 'calendar' | 'list') || 'calendar';
   });
 
   // Save viewMode changes to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(VIEW_MODE_KEY, viewMode);
+      localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
     } catch (error) {
       console.error('Failed to save view mode:', error);
     }
-  }, [viewMode]);
+  }, [viewMode, STORAGE_KEYS.VIEW_MODE]);
 
   // Calculate program progress
   const progressStats = useMemo(() => {
     const allDays = schedule.flat();
     const totalDays = allDays.length;
     const completedDays = allDays.filter(day => {
-      const baseWorkout = day.workout.split(' OR ')[0].trim();
-      const program = workoutPrograms[baseWorkout];
+      const program = getWorkoutProgram(day.workout, programConfig);
       if (!program) return false;
 
       const totalExercises = [
@@ -188,7 +246,7 @@ export default function WorkoutTracker() {
       completed: completedDays,
       total: totalDays
     };
-  }, [schedule]);
+  }, [schedule, programConfig]);
 
   /**
    * Get details for an expanded workout
@@ -201,12 +259,11 @@ export default function WorkoutTracker() {
     const day = schedule[weekIndex]?.[dayIndex];
     if (!day) return null;
 
-    const baseWorkout = day.workout.split(' OR ')[0].trim();
-    const details = workoutPrograms[baseWorkout];
+    const details = getWorkoutProgram(day.workout, programConfig);
     if (!details) return null;
 
     return { day, details, weekIndex, dayIndex };
-  }, [schedule]);
+  }, [schedule, programConfig]);
 
   /**
    * Handle clicking on a workout card
@@ -288,9 +345,9 @@ export default function WorkoutTracker() {
    */
   const handleDateChange = useCallback((newDate: Date) => {
     setStartDate(newDate);
-    setSchedule(generateSchedule(newDate));
+    setSchedule(generateSchedule(newDate, programConfig.programData));
     setExpandedWorkoutId(null);
-  }, [setStartDate, setSchedule]);  // Add setSchedule to dependencies
+  }, [setStartDate, setSchedule, programConfig.programData]);
 
   /**
    * Handle scrolling when closing a workout
@@ -332,11 +389,10 @@ export default function WorkoutTracker() {
       }
     }, 100);
   }, []);
-
   return (
     <div className="max-w-6xl mx-auto p-2 sm:p-6">
       <h1 className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-center">
-        8-Week Catcher Velocity Program
+        {programConfig.programData.name}
       </h1>
       
       {/* Program Header */}
@@ -390,8 +446,7 @@ export default function WorkoutTracker() {
                     const isExpanded = expandedWorkoutId === workoutId;
                     
                     // Get workout program to check total exercises
-                    const baseWorkout = day.workout.split(' OR ')[0].trim();
-                    const program = workoutPrograms[baseWorkout];
+                    const program = getWorkoutProgram(day.workout, programConfig);
                     
                     // Calculate if all exercises are completed
                     const isCompleted = program ? (() => {
@@ -437,6 +492,7 @@ export default function WorkoutTracker() {
                             }
                           }}
                           viewMode={viewMode}
+                          workoutTypes={programConfig.programData.workoutTypes}
                         />
                         {/* Render detail card immediately after day card in list view */}
                         {isExpanded && viewMode === 'list' && (
@@ -454,6 +510,7 @@ export default function WorkoutTracker() {
                             }
                             onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
                             viewMode={viewMode}
+                            workoutTypes={programConfig.programData.workoutTypes}
                           />
                         )}
                       </div>
@@ -485,6 +542,7 @@ export default function WorkoutTracker() {
                           handleWorkoutScroll(weekIndex, dayIndex);
                         }}
                         viewMode={viewMode}
+                        workoutTypes={programConfig.programData.workoutTypes}
                       />
                     </div>
                   )}
@@ -497,7 +555,6 @@ export default function WorkoutTracker() {
       {/* Footer Information */}
       <footer className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-600">
         <p>Click any workout card to see details. Each exercise has a video demonstration available.</p>
-      </footer>
-    </div>
+      </footer>    </div>
   );
 }

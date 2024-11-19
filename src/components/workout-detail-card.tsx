@@ -10,8 +10,8 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
 import { ExerciseRow } from '@/components/exercise-row';
-import type { Exercise, WorkoutProgram } from '@/data/types';
-import { workoutTypes } from '@/data/workouts';
+import type { Exercise, WorkoutProgram, WorkoutType } from '@/data/types';
+import { getBaseWorkout } from '@/utils/common';
 
 // Constants
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -26,11 +26,11 @@ interface WorkoutSectionProps {
   exercises?: Exercise[];                 // List of exercises in this section
   completed: Record<string, boolean>;     // Completion status for each exercise
   onComplete: (id: string) => void;       // Callback when exercise completion status changes
-  workoutType: string;                    // Type of workout (affects exercise variations)
   weekIndex: number;                      // Week number (1-8)
   dayIndex: number;                       // Day number (1-7)
 }
 
+// Remove workoutType from props since we no longer use variations
 interface WorkoutDetailCardProps {
   day: {
     workout: string;                      // Workout name (e.g., "Hybrid B")
@@ -45,6 +45,7 @@ interface WorkoutDetailCardProps {
   onBatchComplete: (exerciseIds: string[], completed: boolean) => void;  // Add new prop
   onScroll?: () => void;  // Add new prop for scroll handling
   viewMode?: 'calendar' | 'list';  // Add new prop for view mode
+  workoutTypes: Record<string, WorkoutType>;  // Add this prop
 }
 
 /**
@@ -62,28 +63,20 @@ const getSectionId = (weekIndex: number, dayIndex: number, title: string): strin
   `week${weekIndex}-day${dayIndex}-${title.toLowerCase()}`;
 
 /**
- * Extracts base workout name by removing variations and asterisks
- * @param workout Workout name with possible variations
- * @returns Base workout name
- */
-const getBaseWorkout = (workout: string): string => 
-  workout.split(' OR ')[0].replace('*', '');
-
-/**
  * WorkoutSection Component
  * Renders a section of exercises (e.g., Warm-up, Throwing, Recovery)
  */
+// Simplified WorkoutSection component without workoutType prop
 const WorkoutSection: React.FC<WorkoutSectionProps> = ({ 
   title, 
   exercises = [], 
   completed = {}, 
   onComplete,
-  workoutType,
   weekIndex,
   dayIndex
 }) => {
-  const sectionId = getSectionId(weekIndex, dayIndex, title);
-  const completedCount = Object.values(completed).filter(Boolean).length;
+  const sectionId = `week${weekIndex}-day${dayIndex}-${title.toLowerCase()}`;
+  const completedCount = exercises.filter(ex => completed[`${sectionId}-${ex.id}`]).length;
   
   return (
     <div className="rounded-lg p-3 sm:p-6">
@@ -109,7 +102,6 @@ const WorkoutSection: React.FC<WorkoutSectionProps> = ({
               completed={!!completed[exerciseId]}
               onComplete={() => onComplete(exerciseId)}
               id={exerciseId}
-              workoutType={workoutType}
             />
           );
         })}
@@ -131,7 +123,8 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   weekIndex,
   dayIndex,
   onScroll,
-  viewMode = 'calendar'
+  viewMode = 'calendar',
+  workoutTypes  // Add this prop
 }) => {
   // Get workout type information
   const baseWorkout = getBaseWorkout(day.workout);
@@ -139,12 +132,12 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
 
   // Define sections based on workout type
   const workoutSections = baseWorkout === 'Off' 
-    ? [{ title: "Rest Day", exercises: details.recovery }]  // Rest days only show recovery
+    ? [{ title: "Recovery", exercises: details.recovery }]  // Rest days only show recovery
     : [
         { title: "Warm-up", exercises: details.warmup },    // Normal days show all sections
         { title: "Throwing", exercises: details.throwing },
         { title: "Recovery", exercises: details.recovery }
-      ];
+      ].filter(section => section.exercises?.length > 0); // Only show sections with exercises
 
   // Get all exercise IDs for batch operations
   const allExerciseIds = workoutSections.flatMap(section => 
@@ -206,7 +199,6 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
               exercises={section.exercises}
               completed={day.completed}
               onComplete={onComplete}
-              workoutType={baseWorkout}
               weekIndex={weekIndex}
               dayIndex={dayIndex}
             />

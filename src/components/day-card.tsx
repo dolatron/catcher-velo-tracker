@@ -7,7 +7,7 @@
 
 import React, { useMemo, forwardRef } from 'react';
 import { Card } from '@/components/ui/card';
-import { workoutTypes } from '@/data/workouts';
+import type { WorkoutType } from '@/data/types';
 import { getBaseWorkout, formatDate } from '@/utils/common';
 
 // Type Definitions
@@ -21,6 +21,7 @@ interface DayCardProps {
   inProgress?: boolean;  // Add new prop
   completionPercentage?: number;  // Add new prop
   viewMode?: 'calendar' | 'list';
+  workoutTypes: Record<string, WorkoutType>;  // Add this prop
 }
 
 // Date formatting options for different parts of the date display
@@ -67,13 +68,21 @@ const BASE_STYLES = {
 
 // Gets workout information from the workoutTypes mapping
 // Returns default values if workout type not found
-const getWorkoutInfo = (workout: string) => {
+const getWorkoutInfo = (workout: string, workoutTypes: Record<string, WorkoutType>): WorkoutType => {
   const baseWorkout = getBaseWorkout(workout);
-  return workoutTypes[baseWorkout] || {
-    name: workout,
-    colorClass: 'bg-gray-100 hover:bg-gray-200 text-gray-900',
-    description: 'Custom workout'
-  };
+  const workoutType = workoutTypes[baseWorkout];
+
+  if (!workoutType) {
+    return {
+      id: 'custom',
+      name: workout,
+      colorClass: 'bg-gray-100 hover:bg-gray-200 text-gray-900',
+      description: 'Custom workout',
+      sections: []
+    };
+  }
+
+  return workoutType;
 };
 
 /**
@@ -82,6 +91,7 @@ const getWorkoutInfo = (workout: string) => {
  */
 export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   workout,
+  workoutTypes,  // Add this prop
   date,
   isExpanded,
   onClick,
@@ -91,7 +101,7 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
   viewMode = 'calendar'
 }, ref) => {
   // Memoized values to prevent unnecessary recalculations
-  const workoutInfo = useMemo(() => getWorkoutInfo(workout), [workout]);
+  const workoutInfo = useMemo(() => getWorkoutInfo(workout, workoutTypes), [workout, workoutTypes]);
   
   // Format date parts once and reuse
   const formattedDate = useMemo(() => ({
@@ -102,24 +112,24 @@ export const DayCard = forwardRef<HTMLDivElement, DayCardProps>(({
 
   // Compute classes for card styling, including conditional expanded state
   const cardClasses = useMemo(() => {
-    const baseClasses = [
-      BASE_STYLES.card.default,
-      BASE_STYLES.card[viewMode],
-      // Only use the workout color if not in progress
-      inProgress ? '' : workoutInfo.colorClass
-    ];
+    const classes = [];
+    
+    // Add base classes
+    classes.push('rounded-xl', 'border', 'shadow-sm');
+    classes.push(BASE_STYLES.card.default);
+    classes.push(BASE_STYLES.card[viewMode]);
+    
+    // Add color class (if not in progress)
+    if (!inProgress) {
+      classes.push(workoutInfo.colorClass);
+    }
+    
+    // Add state classes
+    if (isExpanded) classes.push(BASE_STYLES.card.expanded);
+    if (inProgress) classes.push(BASE_STYLES.card.inProgress);
+    if (completed) classes.push(BASE_STYLES.card.completed);
 
-    if (isExpanded) {
-      baseClasses.push(BASE_STYLES.card.expanded);
-    }
-    if (inProgress) {
-      baseClasses.push(BASE_STYLES.card.inProgress);
-    }
-    if (completed) {
-      baseClasses.push(BASE_STYLES.card.completed);
-    }
-
-    return baseClasses.join(' ');
+    return classes.join(' ');
   }, [workoutInfo.colorClass, isExpanded, completed, inProgress, viewMode]);
 
   return (
