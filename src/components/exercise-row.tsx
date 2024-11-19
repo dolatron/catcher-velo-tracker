@@ -10,7 +10,7 @@ import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ExternalLink } from 'lucide-react';
-import type { Exercise } from '@/data/types';
+import type { Exercise } from '@/common/types';
 
 // Type Definitions
 interface ExerciseRowProps {

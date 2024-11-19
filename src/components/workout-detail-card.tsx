@@ -10,8 +10,8 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
 import { ExerciseRow } from '@/components/exercise-row';
-import type { Exercise, WorkoutProgram, WorkoutType } from '@/data/types';
-import { getBaseWorkout } from '@/utils/common';
+import type { Exercise, WorkoutProgram, WorkoutType } from '@/common/types';
+import { getBaseWorkout } from '@/common/utils';
 
 // Constants
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {

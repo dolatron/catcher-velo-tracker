@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import type { Program, Exercise, Category } from '@/data/types';
+import type { Program, Exercise, Category } from '@/common/types';
 import programData from '@/programs/driveline-catcher-velo/program.json';
 import exerciseData from '@/programs/driveline-catcher-velo/exercises.json';
 

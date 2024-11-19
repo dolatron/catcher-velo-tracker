@@ -7,8 +7,8 @@
 
 import React, { useMemo, forwardRef } from 'react';
 import { Card } from '@/components/ui/card';
-import type { WorkoutType } from '@/data/types';
-import { getBaseWorkout, formatDate } from '@/utils/common';
+import type { WorkoutType } from '@/common/types';
+import { getBaseWorkout, formatDate } from '@/common/utils';
 
 // Type Definitions
 interface DayCardProps {

@@ -20,8 +20,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
-import type { DayWorkout, WorkoutProgram, Program, Exercise } from '@/data/types';
-import { normalizeDate, getBaseWorkout } from '@/utils/common';
+import type { DayWorkout, WorkoutProgram, Program, Exercise } from '@/common/types';
+import { normalizeDate, getBaseWorkout } from '@/common/utils';
 import { LayoutGrid, LayoutList } from 'lucide-react';
 import { ProgramConfig, useProgram } from '@/contexts/program-context';
 

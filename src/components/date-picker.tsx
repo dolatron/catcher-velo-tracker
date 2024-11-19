@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ConfirmModal } from './ui/confirm-modal';
-import { normalizeDate, formatDateForDisplay, formatDateForInput, calculateEndDate } from '@/utils/common';
+import { normalizeDate, formatDateForDisplay, formatDateForInput, calculateEndDate } from '@/common/utils';
 
 interface DatePickerProps {
   selectedDate: Date;
