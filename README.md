@@ -1,26 +1,41 @@
-# Catcher Velocity Program Tracker
+# Catcher Velo Tracker
 
-A React-based web application for tracking progress through Driveline Baseball's 8-week catcher velocity program.
+A web application for tracking progress through an 8-week velocity development program designed for baseball catchers.
+
+## Overview
+
+Built with Next.js 15 and TypeScript, this application helps catchers track their progression through specialized throwing programs. It features workout tracking, exercise demonstrations, and progress monitoring.
 
 ## Features
 
 - 8-week workout schedule visualization
-- Exercise tracking and progress persistence
-- Video demonstrations for exercises
-- Mobile-responsive design
-- Accessibility support
+- Daily workout tracking with RPE recording
+- Exercise note-taking capabilities
+- Mobile-responsive interface
+- Dark mode support
+- Local storage persistence
 
+## Tech Stack
+
+- Next.js 15
+- TypeScript
+- React 18
+- TailwindCSS
+- Radix UI Components
+- Local Font Optimization (Geist Sans/Mono)
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 16+
+- Node.js (>= 18.0.0)
 - npm or yarn
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone [repository-url]
+git clone https://github.com/dolatron/catcher-velo-tracker.git
 
 # Install dependencies
 npm install
@@ -32,26 +47,39 @@ npm run dev
 ## Project Structure
 
 ```
-src/
-├── components/          # React components
-│   ├── exercise-row.tsx
-│   └── velo-tracker.tsx
-├── data/               # Data and configuration files
-│   ├── programs/
-│   ├── exercises.ts
-│   ├── programs.ts
-│   ├── types.ts
-│   └── workouts.ts
-└── utils/              # Utility functions
-    ├── common.ts
-    ├── program-loader.ts
-    └── program-utils.ts
+├── src
+│   ├── app
+│   │   ├── favicon.ico
+│   │   ├── fonts
+│   │   │   ├── GeistMonoVF.woff
+│   │   │   └── GeistVF.woff
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── common
+│   │   ├── types.ts
+│   │   └── utils.ts
+│   ├── components
+│   │   ├── date-picker.tsx
+│   │   ├── day-card.tsx
+│   │   ├── exercise-row.tsx
+│   │   ├── ui
+│   │   │   ├── alert.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── checkbox.tsx
+│   │   │   ├── confirm-modal.tsx
+│   │   │   └── label.tsx
+│   │   ├── workout-detail-card.tsx
+│   │   └── workout-tracker.tsx
+│   ├── contexts
+│   │   └── program-context.tsx
+│   ├── lib
+│   │   └── utils.ts
+│   └── programs
+│       └── driveline-catcher-velo
+│           ├── exercises.json
+│           └── program.json
 ```
-
-
-## Getting Started
-
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 

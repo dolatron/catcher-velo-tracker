@@ -1,12 +1,12 @@
 {
   "specification": "https://github.com/alloydwhitlock/structure-file-spec",
-  "name": "Catcher Velocity Tracker",
+  "name": "Workout Tracker",
   "version": "1.0.0",
-  "description": "A workout tracking application for baseball catcher velocity training",
+  "description": "A workout tracking application for baseball training programs",
   "encoding": "utf8",
   "repository": {
     "type": "git",
-    "url": "https://github.com/username/catcher-velo-tracker"
+    "url": "https://github.com/dolatron/catcher-velo-tracker"
   },
   "dependencies": {
     "node": ">=18.0.0",
@@ -16,41 +16,74 @@
     "src": {
       "description": "Source code directory",
       "contents": {
+        "app": {
+          "description": "Next.js app directory",
+          "contents": {
+            "fonts": {
+              "description": "Local font files",
+              "contents": {
+                "GeistMonoVF.woff": "Geist Mono variable font",
+                "GeistVF.woff": "Geist Sans variable font"
+              }
+            },
+            "favicon.ico": "Site favicon",
+            "globals.css": "Global styles",
+            "layout.tsx": "Root layout component",
+            "page.tsx": "Home page component"
+          }
+        },
+        "common": {
+          "description": "Shared utilities and types",
+          "contents": {
+            "types.ts": "TypeScript type definitions",
+            "utils.ts": "Utility functions"
+          }
+        },
         "components": {
           "description": "React components",
           "contents": {
-            "exercise-row.tsx": "Exercise row component for displaying individual exercises",
-            "velo-tracker.tsx": "Main velocity tracking component"
-          }
-        },
-        "data": {
-          "description": "Data and configuration files",
-          "contents": {
-            "programs": {
-              "description": "Workout program definitions",
+            "ui": {
+              "description": "Shared UI components using shadcn/ui",
               "contents": {
-                "catcher-velo-program.json": "Main velocity program configuration"
+                "alert.tsx": "Alert component",
+                "card.tsx": "Card component",
+                "checkbox.tsx": "Checkbox component",
+                "confirm-modal.tsx": "Confirmation modal component",
+                "label.tsx": "Label component"
               }
             },
-            "exercises.ts": "Exercise definitions and configurations",
-            "programs.ts": "Program configurations and mappings",
-            "types.ts": "TypeScript type definitions",
-            "workouts.ts": "Workout type definitions"
+            "date-picker.tsx": "Date picker component",
+            "day-card.tsx": "Day card component",
+            "exercise-row.tsx": "Exercise row component",
+            "workout-detail-card.tsx": "Workout detail card component",
+            "workout-tracker.tsx": "Main workout tracker component"
           }
         },
-        "utils": {
-          "description": "Utility functions and helpers",
+        "contexts": {
+          "description": "React context providers",
           "contents": {
-            "common.ts": "Common utility functions",
-            "program-loader.ts": "Program loading utilities",
-            "program-utils.ts": "Program-specific utility functions"
+            "program-context.tsx": "Program data provider"
+          }
+        },
+        "lib": {
+          "description": "Library code",
+          "contents": {
+            "utils.ts": "Utility functions"
+          }
+        },
+        "programs": {
+          "description": "Program definitions",
+          "contents": {
+            "driveline-catcher-velo": {
+              "description": "Driveline catcher velocity program",
+              "contents": {
+                "exercises.json": "Exercise definitions",
+                "program.json": "Program structure and schedule"
+              }
+            }
           }
         }
       }
-    },
-    "public": {
-      "description": "Public assets directory",
-      "contents": {}
     }
   },
   "metadata": {
