@@ -1,8 +1,8 @@
 {
   "id": "catcher-velo-program",
-  "name": "8 Week Catcher Velo Program",
+  "name": "12 Week Catcher Velo Program",
   "version": "1.0.0",
-  "description": "8-week velocity development program for catchers",
+  "description": "12-week velocity development program for catchers with enhanced recovery",
   "workoutTypes": {
     "Hybrid B": {
       "id": "hybrid-b",
@@ -568,40 +568,56 @@
     }
   },
   "schedule": {
-    "length": 8,
+    "length": 12,
     "unit": "weeks",
     "weeks": [
       {
         "id": "week-1",
-        "days": ["Off", "Recovery", "Hybrid B", "Recovery", "Hybrid C", "Recovery", "Hybrid C"]
+        "days": ["Recovery", "Hybrid B", "Off", "Recovery", "Hybrid C", "Off", "Recovery"]
       },
       {
         "id": "week-2",
-        "days": ["Off", "Recovery", "Hybrid B", "Recovery", "Hybrid A", "Recovery", "Hybrid C"]
+        "days": ["Hybrid B", "Off", "Recovery", "Hybrid A", "Off", "Recovery", "Hybrid C"]
       },
       {
         "id": "week-3",
-        "days": ["Off", "Recovery", "Hybrid A", "Recovery", "Hybrid C", "Recovery", "Hybrid A"]
+        "days": ["Off", "Recovery", "Hybrid A", "Off", "Recovery", "Hybrid C", "Off"]
       },
       {
         "id": "week-4",
-        "days": ["Off", "Recovery", "Hybrid A", "Recovery", "Hybrid C", "Recovery", "Hybrid A"]
+        "days": ["Recovery", "Hybrid A", "Off", "Recovery", "Hybrid C", "Off", "Recovery"]
       },
       {
         "id": "week-5",
-        "days": ["Off", "Recovery", "Plyo Velo", "Recovery", "Hybrid B", "Recovery", "Hybrid A"]
+        "days": ["Hybrid A", "Off", "Recovery", "Plyo Velo", "Off", "Recovery", "Hybrid B"]
       },
       {
         "id": "week-6",
-        "days": ["Off", "Recovery", "Plyo Velo", "Recovery", "Recovery", "Recovery", "Velocity"]
+        "days": ["Off", "Recovery", "Plyo Velo", "Off", "Recovery", "Recovery", "Velocity"]
       },
       {
         "id": "week-7",
-        "days": ["Off", "Recovery", "Plyo Velo", "Recovery", "Hybrid C", "Recovery", "Velocity"]
+        "days": ["Off", "Recovery", "Plyo Velo", "Off", "Recovery", "Hybrid C", "Off"]
       },
       {
         "id": "week-8",
-        "days": ["Off", "Recovery", "Plyo Velo", "Recovery", "Recovery", "Recovery", "Velocity"]
+        "days": ["Recovery", "Plyo Velo", "Off", "Recovery", "Recovery", "Velocity", "Off"]
+      },
+      {
+        "id": "week-9",
+        "days": ["Recovery", "Plyo Velo", "Off", "Recovery", "Hybrid A", "Off", "Recovery"]
+      },
+      {
+        "id": "week-10",
+        "days": ["Plyo Velo", "Off", "Recovery", "Hybrid C", "Off", "Recovery", "Velocity"]
+      },
+      {
+        "id": "week-11",
+        "days": ["Off", "Recovery", "Plyo Velo", "Off", "Recovery", "Hybrid C", "Off"]
+      },
+      {
+        "id": "week-12",
+        "days": ["Recovery", "Plyo Velo", "Off", "Recovery", "Recovery", "Velocity", "Off"]
       }
     ]
   }

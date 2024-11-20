@@ -1,12 +1,12 @@
 /**
  * WorkoutTracker Component
  * 
- * Main component for the 8-Week Catcher Velocity Program tracker.
+ * Main component Workout Program tracker.
  * Manages the complete workout schedule, tracks exercise completion,
  * and persists progress in local storage.
  * 
  * Features:
- * - Displays full 8-week program calendar
+ * - Displays full program calendar
  * - Tracks exercise completion state
  * - Persists progress in localStorage
  * - Responsive layout for all screen sizes
@@ -420,6 +420,7 @@ export default function WorkoutTracker() {
           selectedDate={startDate}
           onDateChange={handleDateChange}
           progress={progressStats}
+          programLength={programConfig.programData.schedule.length}  // Add this prop
         />
         <div className="flex justify-end">
           <button

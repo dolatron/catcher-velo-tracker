@@ -98,19 +98,19 @@ export const formatDateForInput = (date: Date): string => {
 };
 
 /**
- * Calculates the program end date based on a start date.
- * Program duration is fixed at 8 weeks (56 days) minus 1 day.
+ * Calculates the program end date based on a start date and program length.
  * 
  * @param {Date} startDate - Program start date
+ * @param {number} programLength - Program length in weeks
  * @returns {Date} Calculated program end date
  * 
  * @example
  * const start = new Date('2023-12-25');
- * const end = calculateEndDate(start);
+ * const end = calculateEndDate(start, 8);
  * // end = 2024-02-18 (55 days after start)
  */
-export const calculateEndDate = (startDate: Date): Date => {
+export const calculateEndDate = (startDate: Date, programLength: number): Date => {
   const endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + (8 * 7) - 1);
+  endDate.setDate(startDate.getDate() + (programLength * 7) - 1); // -1 because we start counting from 0
   return endDate;
 };

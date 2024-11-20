@@ -31,13 +31,19 @@ interface DatePickerProps {
     completed: number;     // Number of completed days
     total: number;        // Total number of program days
   };
+  programLength: number;  // Add this prop
 }
 
 /**
  * DatePicker Component
  * Manages program start date and displays progress information
  */
-export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChange, progress }) => {
+export const DatePicker: React.FC<DatePickerProps> = ({ 
+  selectedDate, 
+  onDateChange, 
+  progress,
+  programLength  // Add this parameter
+}) => {
   // Local state for date picker UI
   const [isExpanded, setIsExpanded] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(() => normalizeDate(selectedDate));
@@ -96,7 +102,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onDateChan
             Start Date: {formatDateForDisplay(selectedDate)}
           </span>
           <span className="text-xs text-gray-500 block sm:inline sm:ml-2">
-            (End Date: {formatDateForDisplay(calculateEndDate(selectedDate))})
+            (End Date: {formatDateForDisplay(calculateEndDate(selectedDate, programLength))})
           </span>
         </div>
         <div className="text-sm text-gray-600">
