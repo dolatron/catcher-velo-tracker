@@ -1,5 +1,5 @@
 /**
- * Core type definitions for the Catcher Velocity Tracker application.
+ * Core type definitions for the Velocity Tracker application.
  * This module contains all shared type definitions used across the application
  * for workout tracking, program management, and UI components.
  * 
@@ -34,30 +34,28 @@ export interface Category {
  * @property {string} [notes] - Workout-specific override for notes
  */
 export interface Exercise {
-  // Core properties required for all exercises
-  id: string;         // Unique identifier
-  name: string;       // Display name
-  category: string;   // Category identifier
-  videoUrl?: string;  // Optional demo video URL
+  id: string;         
+  name: string;       
+  category: string;   
+  videoUrl?: string;  
 
-  // Base configuration from exercises.json
   defaultSets?: number;
   defaultReps?: string;
   defaultRpe?: string;
   defaultNotes?: string;
 
-  // Workout-specific overrides from program.json
-  sets?: number;      // Overrides defaultSets
-  reps?: string;      // Overrides defaultReps
-  rpe?: string;       // Overrides defaultRpe
-  notes?: string;     // Overrides defaultNotes
+  sets?: number;      
+  reps?: string;      
+  rpe?: string;       
+  notes?: string;     
 }
 
 /**
- * Represents a grouped section of exercises within a workout.
+ * Represents a section of exercises within a workout.
  * @interface WorkoutSection
  */
 export interface WorkoutSection {
+  id: string;
   name: string;
   exercises: Exercise[];
 }
@@ -84,17 +82,15 @@ export interface WorkoutType {
 }
 
 /**
- * Defines the structure of a workout program including warmup, primary work, and recovery.
+ * Defines the structure of a workout program including all sections.
  * 
  * @interface WorkoutProgram
- * @property {Exercise[]} warmup - Warmup exercise sequence
- * @property {Exercise[]} throwing - Primary throwing exercises
- * @property {Exercise[]} recovery - Recovery and cooldown exercises
+ * @property {WorkoutSection[]} sections - All exercise sections for this workout
+ * @property {string} [rpeRange] - Target RPE range
+ * @property {string} [notes] - Additional workout notes
  */
 export interface WorkoutProgram {
-  warmup: Exercise[];
-  throwing: Exercise[];
-  recovery: Exercise[];
+  sections: WorkoutSection[];
   rpeRange?: string;
   notes?: string;
 }
@@ -120,7 +116,6 @@ export interface Program {
     length: number;
     unit: string;
     weeks: {
-      id: string;
       days: string[];
     }[];
   };
@@ -138,15 +133,15 @@ export interface Program {
 export type DayWorkout = {
   date: Date;
   workout: string;
-  completed: Record<string, boolean>;  // Maps exercise IDs to completion status
-  userNotes?: string;                  // Optional user-provided workout notes
+  completed: Record<string, boolean>;  
+  userNotes?: string;                  
 };
 
 /**
  * Tracks overall workout completion progress.
  * 
  * @interface WorkoutProgress
- * @property {number} totalExercises - Total number of exercises in workout
+ * @property {number} totalExercises - Total number of exercises
  * @property {number} completedExercises - Number of completed exercises
  * @property {number} percentage - Completion percentage
  */
@@ -166,6 +161,7 @@ export type WorkoutProgress = {
  * @property {(id: string) => void} onComplete - Exercise completion handler
  * @property {number} weekIndex - Current week index
  * @property {number} dayIndex - Current day index
+ * @property {string} sectionId - Unique identifier for the section
  */
 export interface WorkoutSectionProps {
   title: string;
@@ -174,6 +170,7 @@ export interface WorkoutSectionProps {
   onComplete: (id: string) => void;
   weekIndex: number;
   dayIndex: number;
+  sectionId: string;
 }
 
 /**
@@ -184,6 +181,8 @@ export interface WorkoutSectionProps {
  * @property {WorkoutProgram} details - Workout program details
  * @property {(id: string) => void} onComplete - Single exercise completion handler
  * @property {() => void} onClose - Close detail view handler
+ * @property {number} weekIndex - Current week index
+ * @property {number} dayIndex - Current day index
  * @property {(exerciseIds: string[], completed: boolean) => void} onBatchComplete - Batch completion handler
  * @property {() => void} [onScroll] - Optional scroll handler
  * @property {'calendar' | 'list'} [viewMode] - Display mode
@@ -191,15 +190,15 @@ export interface WorkoutSectionProps {
  * @property {(notes: string) => void} onNotesChange - Notes update handler
  */
 export interface WorkoutDetailCardProps {
-  day: DayWorkout;                     // Current day's workout data
-  details: WorkoutProgram;             // Exercise definitions and structure
-  onComplete: (id: string) => void;    // Exercise completion handler
-  onClose: () => void;                 // Close detail view handler
-  weekIndex: number;                   // Current week (0-7)
-  dayIndex: number;                    // Current day (0-6)
+  day: DayWorkout;
+  details: WorkoutProgram;
+  onComplete: (id: string) => void;
+  onClose: () => void;
+  weekIndex: number;
+  dayIndex: number;
   onBatchComplete: (exerciseIds: string[], completed: boolean) => void;
-  onScroll?: () => void;              // Optional scroll handler
-  viewMode?: 'calendar' | 'list';      // Display mode
-  workoutTypes: Record<string, WorkoutType>;  // Available workout configurations
-  onNotesChange: (notes: string) => void;     // Notes update handler
+  onScroll?: () => void;
+  viewMode?: 'calendar' | 'list';
+  workoutTypes: Record<string, WorkoutType>;
+  onNotesChange: (notes: string) => void;
 }

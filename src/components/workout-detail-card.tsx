@@ -16,7 +16,8 @@ import { X } from 'lucide-react';
 import { ExerciseRow } from '@/components/exercise-row';
 import type { 
   WorkoutSectionProps, 
-  WorkoutDetailCardProps 
+  WorkoutDetailCardProps,
+  WorkoutSection
 } from '@/common/types';
 import { getBaseWorkout } from '@/common/utils';
 
@@ -33,8 +34,8 @@ const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
  * Generates unique identifier for exercise sections
  * Used to track completion state
  */
-const getSectionId = (weekIndex: number, dayIndex: number, title: string): string => 
-  `week${weekIndex}-day${dayIndex}-${title.toLowerCase()}`;
+const getSectionId = (weekIndex: number, dayIndex: number, sectionId: string): string => 
+  `week${weekIndex}-day${dayIndex}-${sectionId}`;
 
 /**
  * WorkoutSection Component
@@ -46,10 +47,11 @@ const WorkoutSection: React.FC<WorkoutSectionProps> = ({
   completed = {}, 
   onComplete,
   weekIndex,
-  dayIndex
+  dayIndex,
+  sectionId
 }) => {
-  const sectionId = `week${weekIndex}-day${dayIndex}-${title.toLowerCase()}`;
-  const completedCount = exercises.filter(ex => completed[`${sectionId}-${ex.id}`]).length;
+  const sectionIdentifier = getSectionId(weekIndex, dayIndex, sectionId);
+  const completedCount = exercises.filter(ex => completed[`${sectionIdentifier}-${ex.id}`]).length;
   
   return (
     <div className="rounded-lg p-3 sm:p-6">
@@ -67,7 +69,7 @@ const WorkoutSection: React.FC<WorkoutSectionProps> = ({
       {/* Exercise List */}
       <div className="space-y-1">
         {exercises.map((exercise) => {
-          const exerciseId = `${sectionId}-${exercise.id}`;
+          const exerciseId = `${sectionIdentifier}-${exercise.id}`;
           return (
             <ExerciseRow
               key={exerciseId}
@@ -104,19 +106,10 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
   const baseWorkout = getBaseWorkout(day.workout);
   const workoutInfo = workoutTypes[baseWorkout];
 
-  // Configure sections based on workout type
-  const workoutSections = baseWorkout === 'Off' 
-    ? [{ title: "Recovery", exercises: details.recovery }]
-    : [
-        { title: "Warm-up", exercises: details.warmup },
-        { title: "Throwing", exercises: details.throwing },
-        { title: "Recovery", exercises: details.recovery }
-      ].filter(section => section.exercises?.length > 0);
-
   // Prepare exercise IDs for batch operations
-  const allExerciseIds = workoutSections.flatMap(section => 
-    (section.exercises || []).map(exercise => 
-      `${getSectionId(weekIndex, dayIndex, section.title)}-${exercise.id}`
+  const allExerciseIds = details.sections.flatMap(section => 
+    section.exercises.map(exercise => 
+      `${getSectionId(weekIndex, dayIndex, section.id)}-${exercise.id}`
     )
   );
 
@@ -163,22 +156,23 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
         </button>
       </header>
 
-      {/* Workout Sections */}
-      {details && (
+      {/* Dynamic Workout Sections */}
+      {details?.sections && (
         <div className="divide-y divide-gray-200">
-          {workoutSections.map((section) => (
+          {details.sections.map((section) => (
             <WorkoutSection
-              key={getSectionId(weekIndex, dayIndex, section.title)}
-              title={section.title}
+              key={getSectionId(weekIndex, dayIndex, section.id)}
+              title={section.name}
               exercises={section.exercises}
               completed={day.completed}
               onComplete={onComplete}
               weekIndex={weekIndex}
               dayIndex={dayIndex}
+              sectionId={section.id}
             />
           ))}
           
-          {/* Notes Section - Added to the same divided container */}
+          {/* Notes Section */}
           <div className="rounded-lg p-3 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base sm:text-lg font-semibold text-indigo-900">
@@ -212,7 +206,7 @@ export const WorkoutDetailCard: React.FC<WorkoutDetailCardProps> = ({
           Clear Progress
         </button>
         <button
-          onClick={handleMarkComplete}  // This still closes via onClose()
+          onClick={handleMarkComplete}
           className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
         >
           Complete

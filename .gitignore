@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+claude_pyrojects*
+source_tree.txt
 
 # debug
 npm-debug.log*
