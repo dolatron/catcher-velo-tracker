@@ -15,7 +15,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-// Remove generateSchedule import
 import { DayCard } from '@/components/day-card';
 import { WorkoutDetailCard } from '@/components/workout-detail-card';
 import { DatePicker } from '@/components/date-picker';
@@ -57,7 +56,7 @@ type Schedule = DayWorkout[][];
  * Creates a unique identifier for a workout
  */
 const createWorkoutId = (weekIndex: number, dayIndex: number): string => 
-  `week${weekIndex}-day${dayIndex}`; // Remove date from ID, week and day indices are sufficient
+  `week${weekIndex}-day${dayIndex}`;
 
 const getStorageKeys = (programId: string) => ({
   SCHEDULE: `workout-tracker-state-${programId}`,
@@ -85,6 +84,38 @@ const generateSchedule = (startDate: Date, program: Program): DayWorkout[][] => 
       };
     })
   );
+};
+
+/**
+ * Get workout program details from the program data
+ */
+const getWorkoutProgram = (workout: string, programConfig: ProgramConfig): WorkoutProgram | undefined => {
+  const baseWorkout = getBaseWorkout(workout);
+  const workoutType = programConfig.programData.workoutTypes[baseWorkout];
+  
+  if (!workoutType) return undefined;
+
+  // Helper to merge exercise defaults with workout-specific values
+  const mergeExerciseWithDefaults = (exercise: Exercise): Exercise => {
+    const baseExercise = programConfig.exerciseData.exercises[exercise.id];
+    if (!baseExercise) return exercise;
+
+    return {
+      ...baseExercise,
+      ...exercise,
+    };
+  };
+
+  // Return program with dynamic sections
+  return {
+    sections: workoutType.sections.map(section => ({
+      id: section.id,
+      name: section.name,
+      exercises: section.exercises.map(mergeExerciseWithDefaults)
+    })),
+    rpeRange: workoutType.rpeRange,
+    notes: workoutType.notes
+  };
 };
 
 /**
@@ -161,41 +192,6 @@ const useStartDate = (STORAGE_KEYS: ReturnType<typeof getStorageKeys>): [Date, (
 };
 
 /**
- * Get workout program details from the program data
- */
-const getWorkoutProgram = (workout: string, programConfig: ProgramConfig): WorkoutProgram | undefined => {
-  const baseWorkout = getBaseWorkout(workout);
-  const workoutType = programConfig.programData.workoutTypes[baseWorkout];
-  
-  if (!workoutType) return undefined;
-
-  // Helper to merge exercise defaults with workout-specific values
-  const mergeExerciseWithDefaults = (exercise: Exercise): Exercise => {
-    const baseExercise = programConfig.exerciseData.exercises[exercise.id];
-    if (!baseExercise) return exercise;
-
-    return {
-      ...baseExercise,           // Base exercise contains all default values
-      ...exercise,               // Workout-specific overrides
-    };
-  };
-
-  // Map sections to their proper categories and include exercise defaults
-  const workoutProgram: WorkoutProgram = {
-    warmup: workoutType.sections.find(s => s.name.toLowerCase() === 'warmup')
-      ?.exercises.map(mergeExerciseWithDefaults) || [],
-    throwing: workoutType.sections.find(s => s.name.toLowerCase() === 'throwing')
-      ?.exercises.map(mergeExerciseWithDefaults) || [],
-    recovery: workoutType.sections.find(s => s.name.toLowerCase() === 'recovery')
-      ?.exercises.map(mergeExerciseWithDefaults) || [],
-    rpeRange: workoutType.rpeRange,
-    notes: workoutType.notes
-  };
-
-  return workoutProgram;
-};
-
-/**
  * Main WorkoutTracker Component
  */
 export default function WorkoutTracker() {
@@ -230,11 +226,9 @@ export default function WorkoutTracker() {
       const program = getWorkoutProgram(day.workout, programConfig);
       if (!program) return false;
 
-      const totalExercises = [
-        ...(program.warmup || []),
-        ...(program.throwing || []),
-        ...(program.recovery || [])
-      ].length;
+      // Calculate total exercises across all sections
+      const totalExercises = program.sections.reduce((total, section) => 
+        total + section.exercises.length, 0);
       
       const completedCount = Object.values(day.completed).filter(Boolean).length;
       return totalExercises > 0 && completedCount >= totalExercises;
@@ -367,7 +361,7 @@ export default function WorkoutTracker() {
         }
       }
     }, 100);
-  }, [viewMode]); // Add viewMode to dependencies
+  }, [viewMode]);
 
   /**
    * Handle scrolling without closing the workout
@@ -420,7 +414,7 @@ export default function WorkoutTracker() {
           selectedDate={startDate}
           onDateChange={handleDateChange}
           progress={progressStats}
-          programLength={programConfig.programData.schedule.length}  // Add this prop
+          programLength={programConfig.programData.schedule.length}
         />
         <div className="flex justify-end">
           <button
@@ -453,130 +447,122 @@ export default function WorkoutTracker() {
             <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-4">
               Week {weekIndex + 1}
             </h2>
-            {/* Rest of the section code */}
             <div className="space-y-2 sm:space-y-4">
-                {/* Grid/List of Day Cards */}
-                <div className={`grid gap-1 sm:gap-4 auto-rows-min ${
-                  viewMode === 'calendar' 
-                    ? 'grid-cols-7 md:grid-cols-7' 
-                    : 'grid-cols-1'
-                }`}>
-                  {week.map((day, dayIndex) => {
-                    const workoutId = createWorkoutId(weekIndex, dayIndex);
-                    const isExpanded = expandedWorkoutId === workoutId;
-                    
-                    // Get workout program to check total exercises
-                    const program = getWorkoutProgram(day.workout, programConfig);
-                    
-                    // Calculate if all exercises are completed
-                    const isCompleted = program ? (() => {
-                      const totalExercises = [
-                        ...(program.warmup || []),
-                        ...(program.throwing || []),
-                        ...(program.recovery || [])
-                      ].length;
-                      const completedCount = Object.values(day.completed).filter(Boolean).length;
-                      return totalExercises > 0 && completedCount >= totalExercises;
-                    })() : false;
-
-                    const inProgress = program ? (() => {
-                      const completedCount = Object.values(day.completed).filter(Boolean).length;
-                      return completedCount > 0 && !isCompleted;
-                    })() : false;
-
-                    const totalExercises = program ? [
-                      ...(program.warmup || []),
-                      ...(program.throwing || []),
-                      ...(program.recovery || [])
-                    ].length : 0;
-
-                    const completedCount = Object.values(day.completed).filter(Boolean).length;
-                    const completionPercentage = totalExercises > 0 
-                      ? (completedCount / totalExercises) * 100 
-                      : undefined;
-
-                    return (
-                      <div key={workoutId} className={viewMode === 'list' ? 'space-y-2' : ''}>
-                        <DayCard
-                          ref={(el) => { cardRefs.current[`${weekIndex}-${dayIndex}`] = el; }}
-                          workout={day.workout}
-                          date={day.date}
-                          isExpanded={isExpanded}
-                          completed={isCompleted}
-                          inProgress={inProgress}
-                          completionPercentage={completionPercentage}
-                          onClick={() => {
-                            const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
-                            if (cardEl) {
-                              handleCardClick(weekIndex, dayIndex, day.date, cardEl);
-                            }
-                          }}
-                          viewMode={viewMode}
-                          workoutTypes={programConfig.programData.workoutTypes}
-                          userNotes={day.userNotes}
-                        />
-                        {/* Render detail card immediately after day card in list view */}
-                        {isExpanded && viewMode === 'list' && (
-                          <WorkoutDetailCard
-                            day={day}
-                            details={getWorkoutDetails(workoutId)?.details ?? {} as WorkoutProgram}
-                            onComplete={(exerciseId) => {
-                              handleExerciseComplete(weekIndex, dayIndex, exerciseId);
-                            }}
-                            onClose={() => handleWorkoutClose(weekIndex, dayIndex)}
-                            weekIndex={weekIndex}
-                            dayIndex={dayIndex}
-                            onBatchComplete={(exerciseIds, completed) => 
-                              handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed)
-                            }
-                            onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
-                            viewMode={viewMode}
-                            workoutTypes={programConfig.programData.workoutTypes}
-                            onNotesChange={(notes) => {
-                              const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
-                              handleNotesUpdate(weekIndex, dayIndex, notes);
-                            }}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
+              {/* Grid/List of Day Cards */}
+              <div className={`grid gap-1 sm:gap-4 auto-rows-min ${
+                viewMode === 'calendar' 
+                  ? 'grid-cols-7 md:grid-cols-7' 
+                  : 'grid-cols-1'
+              }`}>
+                {week.map((day, dayIndex) => {
+                  const workoutId = createWorkoutId(weekIndex, dayIndex);
+                  const isExpanded = expandedWorkoutId === workoutId;
                   
-                  {/* Only render detail card here for calendar view */}
-                  {viewMode === 'calendar' && expandedWorkoutId?.startsWith(`week${weekIndex}`) && (
-                    <div className="col-span-7 mt-2">
-                      <WorkoutDetailCard
-                        day={week[parseInt(expandedWorkoutId.split('-')[1].replace('day', ''))]}
-                        details={getWorkoutDetails(expandedWorkoutId)?.details ?? {} as WorkoutProgram}
-                        onComplete={(exerciseId) => {
-                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
-                          handleExerciseComplete(weekIndex, dayIndex, exerciseId);
-                        }}
-                        onClose={() => {
-                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
-                          handleWorkoutClose(weekIndex, dayIndex);
-                        }}
-                        weekIndex={weekIndex}
-                        dayIndex={parseInt(expandedWorkoutId.split('-')[1].replace('day', ''))}
-                        onBatchComplete={(exerciseIds, completed) => {
-                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
-                          handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed);
-                        }}
-                        onScroll={() => {
-                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
-                          handleWorkoutScroll(weekIndex, dayIndex);
+                  // Get workout program to check total exercises
+                  const program = getWorkoutProgram(day.workout, programConfig);
+                  
+                  // Calculate if all exercises are completed
+                  const isCompleted = program ? (() => {
+                    const totalExercises = program.sections.reduce((total, section) => 
+                      total + section.exercises.length, 0);
+                    const completedCount = Object.values(day.completed).filter(Boolean).length;
+                    return totalExercises > 0 && completedCount >= totalExercises;
+                  })() : false;
+
+                  const inProgress = program ? (() => {
+                    const completedCount = Object.values(day.completed).filter(Boolean).length;
+                    return completedCount > 0 && !isCompleted;
+                  })() : false;
+
+                  const totalExercises = program ? program.sections.reduce((total, section) => 
+                    total + section.exercises.length, 0) : 0;
+
+                  const completedCount = Object.values(day.completed).filter(Boolean).length;
+                  const completionPercentage = totalExercises > 0 
+                    ? (completedCount / totalExercises) * 100 
+                    : undefined;
+
+                  return (
+                    <div key={workoutId} className={viewMode === 'list' ? 'space-y-2' : ''}>
+                      <DayCard
+                        ref={(el) => { cardRefs.current[`${weekIndex}-${dayIndex}`] = el; }}
+                        workout={day.workout}
+                        date={day.date}
+                        isExpanded={isExpanded}
+                        completed={isCompleted}
+                        inProgress={inProgress}
+                        completionPercentage={completionPercentage}
+                        onClick={() => {
+                          const cardEl = cardRefs.current[`${weekIndex}-${dayIndex}`];
+                          if (cardEl) {
+                            handleCardClick(weekIndex, dayIndex, day.date, cardEl);
+                          }
                         }}
                         viewMode={viewMode}
                         workoutTypes={programConfig.programData.workoutTypes}
-                        onNotesChange={(notes) => {
-                          const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
-                          handleNotesUpdate(weekIndex, dayIndex, notes);
-                        }}
+                        userNotes={day.userNotes}
                       />
+                      {/* Render detail card immediately after day card in list view */}
+                      {isExpanded && viewMode === 'list' && (
+                        <WorkoutDetailCard
+                          day={day}
+                          details={getWorkoutDetails(workoutId)?.details ?? {} as WorkoutProgram}
+                          onComplete={(exerciseId) => {
+                            handleExerciseComplete(weekIndex, dayIndex, exerciseId);
+                          }}
+                          onClose={() => handleWorkoutClose(weekIndex, dayIndex)}
+                          weekIndex={weekIndex}
+                          dayIndex={dayIndex}
+                          onBatchComplete={(exerciseIds, completed) => 
+                            handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed)
+                          }
+                          onScroll={() => handleWorkoutScroll(weekIndex, dayIndex)}
+                          viewMode={viewMode}
+                          workoutTypes={programConfig.programData.workoutTypes}
+                          onNotesChange={(notes) => {
+                            handleNotesUpdate(weekIndex, dayIndex, notes);
+                          }}
+                        />
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })}
+                
+                {/* Only render detail card here for calendar view */}
+                {viewMode === 'calendar' && expandedWorkoutId?.startsWith(`week${weekIndex}`) && (
+                  <div className="col-span-7 mt-2">
+                    <WorkoutDetailCard
+                      day={week[parseInt(expandedWorkoutId.split('-')[1].replace('day', ''))]}
+                      details={getWorkoutDetails(expandedWorkoutId)?.details ?? {} as WorkoutProgram}
+                      onComplete={(exerciseId) => {
+                        const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                        handleExerciseComplete(weekIndex, dayIndex, exerciseId);
+                      }}
+                      onClose={() => {
+                        const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                        handleWorkoutClose(weekIndex, dayIndex);
+                      }}
+                      weekIndex={weekIndex}
+                      dayIndex={parseInt(expandedWorkoutId.split('-')[1].replace('day', ''))}
+                      onBatchComplete={(exerciseIds, completed) => {
+                        const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                        handleBatchComplete(weekIndex, dayIndex, exerciseIds, completed);
+                      }}
+                      onScroll={() => {
+                        const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                        handleWorkoutScroll(weekIndex, dayIndex);
+                      }}
+                      viewMode={viewMode}
+                      workoutTypes={programConfig.programData.workoutTypes}
+                      onNotesChange={(notes) => {
+                        const dayIndex = parseInt(expandedWorkoutId.split('-')[1].replace('day', ''));
+                        handleNotesUpdate(weekIndex, dayIndex, notes);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
+            </div>
           </section>
         ))}
       </div>
@@ -584,6 +570,7 @@ export default function WorkoutTracker() {
       {/* Footer Information */}
       <footer className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-600">
         <p>Click any workout card to see details. Each exercise has a video demonstration available.</p>
-      </footer>    </div>
+      </footer>    
+    </div>
   );
 }
